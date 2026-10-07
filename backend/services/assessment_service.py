@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from backend.services.verification_service import build_result
+from backend.services.verification_service import build_result, score_evidence
 
 
 class AssessmentService:
@@ -118,16 +118,17 @@ class AssessmentService:
         claim = next((item for item in candidate["skills"] if item["skill"].casefold() == skill.casefold()), None)
         if optional:
             bank_slugs = {item["slug"] for item in self.available_skills()}
-            required_skills = [item["skill"] for item in candidate["skills"]
-                               if item["origin"] == "resume" and item["slug"] in bank_slugs]
+            assessable_resume = [item["skill"] for item in candidate["skills"]
+                                if item["origin"] == "resume" and item["slug"] in bank_slugs]
+            top_required = assessable_resume[:3] if len(assessable_resume) > 3 else assessable_resume
             with self._connect() as db:
                 completed = {row["skill"] for row in db.execute(
                     "SELECT skill FROM candidate_skill_results WHERE candidate_id=?", (candidate_id,))}
-            remaining = [name for name in required_skills if name not in completed]
+            remaining = [name for name in top_required if name not in completed]
             if remaining:
-                raise ValueError("Complete all resume-mentioned skill checks before optional discovery checks.")
+                raise ValueError("Complete core resume-mentioned skill checks before optional discovery checks.")
             if claim is not None and claim["origin"] == "resume":
-                raise ValueError("This resume-mentioned skill is already in the required assessments.")
+                raise ValueError("This resume-mentioned skill is already in the resume assessments.")
             bank_skill = next((item for item in self.available_skills() if item["skill"].casefold() == skill.casefold()), None)
             if bank_skill is None:
                 raise ValueError("No local question bank is available for this skill.")
@@ -217,12 +218,21 @@ class AssessmentService:
             rows = db.execute("SELECT skill,result_json FROM candidate_skill_results WHERE candidate_id=?", (candidate_id,)).fetchall()
         results = {row["skill"]: json.loads(row["result_json"]) for row in rows}
         bank_slugs = {item["slug"] for item in self.available_skills()}
+
+        # Top 3 assessable resume skills are required for initial report gate (or all if <= 3)
+        assessable_resume = [
+            c["skill"] for c in candidate["skills"]
+            if c["origin"] == "resume" and c["slug"] in bank_slugs
+        ]
+        top_required = set(assessable_resume[:3]) if len(assessable_resume) > 3 else set(assessable_resume)
+
         skills = []
         for claim in candidate["skills"]:
             result = results.get(claim["skill"])
-            required = claim["origin"] == "resume" and claim["slug"] in bank_slugs
+            required = claim["origin"] == "resume" and claim["skill"] in top_required
             if result is None:
-                result = {"skill": claim["skill"], "claimed_level": claim["claimed_level"], "evidence_score": None,
+                ev_data = score_evidence(claim.get("evidence_details", []), claim.get("evidence_snippets", []))
+                result = {"skill": claim["skill"], "claimed_level": claim["claimed_level"], "evidence_score": ev_data["score"],
                           "test_score": None, "final_score": None, "verified_level": None,
                           "status": "pending" if claim["claimed_level"] != "Unspecified" else "unverified",
                           "evidence_snippets": claim["evidence_snippets"], "evidence_details": claim["evidence_details"],

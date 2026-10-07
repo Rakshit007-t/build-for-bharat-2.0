@@ -122,18 +122,34 @@ async def upload_resume(file: UploadFile | None = File(default=None), text: str 
     mentioned = {row["skill"].casefold() for row in extracted["skills"]}
     optional_assessments = [item for item in app.state.assessment_service.available_skills()
                             if item["skill"].casefold() not in mentioned]
+    assessable_list = [row["skill"] for row in extracted["skills"] if row["assessment_supported"]]
+    mandatory_list = assessable_list[:3] if len(assessable_list) > 3 else assessable_list
     return {"candidate_id": candidate_id, "name": extracted["name"], "filename": uploaded_filename,
             "education": extracted["education"],
             "skills": [{"skill": row["skill"], "slug": row["slug"],
-                        "claimed_level": row["claimed_level"], "claim_excerpt": row["claim_excerpt"],
+                        "category": row.get("category", "General"),
+                        "claimed_level": row["claimed_level"],
+                        "step_number": row.get("step_number", 2),
+                        "step_label": row.get("step_label", "Step 2: Intermediate"),
+                        "level_reason": row.get("level_reason", ""),
+                        "claim_excerpt": row["claim_excerpt"],
                         "claim_not_asserted": row["claim_not_asserted"],
                         "assessment_supported": row["assessment_supported"],
                         "evidence_snippets": row["evidence_snippets"],
-                        "evidence_details": row["evidence_details"], "evidence_score": None}
+                        "evidence_details": row["evidence_details"],
+                        "evidence_score": row.get("evidence_score", 0),
+                        "evidence_breakdown": row.get("evidence_breakdown", {})}
                        for row in extracted["skills"]],
-            "mandatory_assessments": [row["skill"] for row in extracted["skills"] if row["assessment_supported"]],
+            "mandatory_assessments": mandatory_list,
             "optional_assessments": optional_assessments,
             "projects": extracted["projects"], "certifications": extracted["certifications"],
+            "stats": {
+                "total_skills": len(extracted["skills"]),
+                "advanced": sum(1 for s in extracted["skills"] if s["claimed_level"] == "Advanced"),
+                "intermediate": sum(1 for s in extracted["skills"] if s["claimed_level"] == "Intermediate"),
+                "beginner": sum(1 for s in extracted["skills"] if s["claimed_level"] == "Beginner"),
+                "avg_evidence": round(sum(s.get("evidence_score", 0) for s in extracted["skills"]) / max(1, len(extracted["skills"])), 1),
+            },
             "notice": "Claims and excerpts are deterministic local extraction; evidence score is a prototype heuristic."}
 
 

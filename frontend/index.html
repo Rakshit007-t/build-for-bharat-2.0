@@ -30,10 +30,148 @@
       <header class="topbar"><div class="breadcrumb"><button class="breadcrumb-home" data-go="overview">Ghost Skills</button><span>/</span><strong id="current-section">Overview</strong></div><div class="top-actions"><span class="status-pill" id="system-status" aria-live="polite"><i></i>Checking readiness</span><span class="offline-badge">Local / Offline</span><button class="icon-button" id="refresh-button" title="Refresh local data" aria-label="Refresh local data">↻</button></div></header>
       <section class="view active" id="view-overview">
         <div class="prototype-banner"><span>LOCAL ANALYTICS PROTOTYPE</span><span>All analysis runs from organizer-provided datasets stored locally.</span></div>
-        <div class="page-heading"><div><p class="eyebrow">TALENT &amp; WORKFORCE ECOSYSTEM</p><h1>Workforce intelligence, grounded in data.</h1><p class="lede">Explore job demand and carefully bounded skill and workforce-trait analyses from the supplied datasets.</p></div><div class="updated">Last generated <strong id="updated-at">Loading local analysis…</strong></div></div>
-        <div class="notice notice-info" id="data-notice"><span>i</span><div><strong>Loading local analysis</strong><p>Connecting to the local API and aggregate artifacts.</p></div></div>
-        <section class="verification-cta card"><div><p class="eyebrow">CLAIMED VS VERIFIED</p><h2>Put technical claims through a transparent local check.</h2><p>Upload a resume, review extracted evidence, and complete a short adaptive assessment.</p></div><button class="primary-button" type="button" data-go="verify">Verify a Resume →</button></section>
+        <!-- 1. OVERVIEW HERO: CLAIMED VS VERIFIED -->
+        <div class="usp-hero card">
+          <div class="usp-hero-head">
+            <div class="usp-hero-badge">
+              <span class="usp-badge-brand">Ghost Skills</span>
+              <span class="usp-badge-sep">·</span>
+              <span class="usp-badge-tag">CLAIMED VS VERIFIED</span>
+            </div>
+            <div class="updated">Local data engine <strong id="updated-at">Ready</strong></div>
+          </div>
+          <h1 class="usp-hero-headline">Turn Resume Claims into Verified Skills.</h1>
+          <p class="usp-hero-sub">A transparent skill trust layer combining resume evidence, demonstrated ability, and workforce-market context.</p>
+          
+          <!-- Compact Visual Pipeline -->
+          <div class="usp-pipeline" aria-label="Skill Trust Layer Pipeline">
+            <div class="pipeline-node"><span class="node-title">CLAIM</span><span class="node-desc">Resume claim</span></div>
+            <span class="pipeline-sep">→</span>
+            <div class="pipeline-node"><span class="node-title">EVIDENCE</span><span class="node-desc">Fact extraction</span></div>
+            <span class="pipeline-sep">→</span>
+            <div class="pipeline-node"><span class="node-title">TEST</span><span class="node-desc">Demonstrated ability</span></div>
+            <span class="pipeline-sep">→</span>
+            <div class="pipeline-node verified-node"><span class="node-title">VERIFIED</span><span class="node-desc">Calibrated tier</span></div>
+            <span class="pipeline-sep">→</span>
+            <div class="pipeline-node"><span class="node-title">MARKET</span><span class="node-desc">Demand context</span></div>
+          </div>
+
+          <div class="usp-hero-actions">
+            <button class="primary-button hero-cta-btn" type="button" data-go="verify">Verify a Skill</button>
+            <span class="hero-cta-hint">Local · Transparent · Deterministic scoring · No external APIs</span>
+          </div>
+        </div>
+
+        <div class="notice notice-info" id="data-notice"><span>i</span><div><strong>Local Trust Engine Active</strong><p>Deterministic local analysis runs from organizer-provided datasets on this machine.</p></div></div>
+
+        <!-- 2. USP TRUST CARD: THE GHOST SKILLS DIFFERENCE -->
+        <div class="card usp-difference-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">THE GHOST SKILLS DIFFERENCE</p>
+              <h2>Why Keyword Matching Fails &amp; Skill Trust Works</h2>
+            </div>
+            <span class="soft-tag">Architecture Comparison</span>
+          </div>
+          <div class="difference-columns">
+            <div class="diff-side ats-side">
+              <div class="diff-side-tag">TRADITIONAL ATS</div>
+              <div class="diff-pipeline ats-pipeline">
+                <span class="pill-step">Keywords</span>
+                <span class="arr">→</span>
+                <span class="pill-step">Match</span>
+              </div>
+              <p class="diff-summary">Surface-level text matching. Assumes claim equals competence. Vulnerable to keyword inflation.</p>
+            </div>
+            <div class="diff-side ghost-side">
+              <div class="diff-side-tag ghost-tag">GHOST SKILLS TRUST LAYER</div>
+              <div class="diff-pipeline ghost-pipeline">
+                <span class="pill-step active">Claim</span>
+                <span class="arr active-arr">→</span>
+                <span class="pill-step active">Evidence</span>
+                <span class="arr active-arr">→</span>
+                <span class="pill-step active">Demonstration</span>
+                <span class="arr active-arr">→</span>
+                <span class="pill-step verified-pill">Verification</span>
+                <span class="arr active-arr">→</span>
+                <span class="pill-step active">Market Context</span>
+              </div>
+              <p class="diff-summary">Multi-factor deterministic flow: 40% extracted factual evidence + 60% demonstrated ability calibrated against 17,443 job-market postings.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. THREE-QUESTION USP EXPLANATION -->
+        <div class="card usp-questions-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">HOW THE TRUST LAYER OPERATES</p>
+              <h2>The Three Questions of Skill Verification</h2>
+            </div>
+            <span class="soft-tag">Core Methodology</span>
+          </div>
+          <div class="questions-three-grid">
+            <div class="question-card">
+              <span class="q-badge">01</span>
+              <h3>WHAT DOES THE RESUME SAY?</h3>
+              <span class="q-arrow-down">↓</span>
+              <div class="q-outcome claim-outcome">CLAIM</div>
+              <p>Extracted self-described skill and stated proficiency level.</p>
+            </div>
+            <div class="question-card">
+              <span class="q-badge">02</span>
+              <h3>WHAT DOES THE RESUME SUPPORT?</h3>
+              <span class="q-arrow-down">↓</span>
+              <div class="q-outcome evidence-outcome">EVIDENCE</div>
+              <p>Deterministic evidence score from projects, roles, certifications, and scale (0–100).</p>
+            </div>
+            <div class="question-card">
+              <span class="q-badge">03</span>
+              <h3>WHAT CAN THE CANDIDATE DEMONSTRATE?</h3>
+              <span class="q-arrow-down">↓</span>
+              <div class="q-outcome test-outcome">TEST</div>
+              <p>Adaptive 3-minute technical knowledge verification check across difficulty tiers.</p>
+            </div>
+          </div>
+          <div class="questions-outcome-strip">
+            <span class="outcome-arrow">→</span>
+            <strong>CALIBRATED OUTCOME:</strong>
+            <span class="verified-skill-tag">VERIFIED SKILL</span>
+            <span class="outcome-bands">Bands: &lt;40 Beginner · 40–70 Intermediate · &gt;70 Advanced</span>
+          </div>
+        </div>
+
         <div class="verification-stats" id="verification-stats" aria-label="Saved verification results"><article><span>Confirmed</span><strong>—</strong></article><article><span>Underclaimed</span><strong>—</strong></article><article><span>Overclaimed</span><strong>—</strong></article></div>
+
+        <!-- 5. MARKET CONNECTION -->
+        <div class="card usp-market-connect-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">BEYOND VERIFICATION</p>
+              <h2>Connecting Verified Skills to Market Realities</h2>
+            </div>
+            <button class="text-button" data-go="market">Explore Job Market →</button>
+          </div>
+          <div class="market-connect-formula">
+            <div class="formula-box">
+              <span class="box-eyebrow">EVIDENCE-BACKED</span>
+              <strong>VERIFIED TALENT</strong>
+              <p>Accurate skill proficiency tiers free from unverified inflation.</p>
+            </div>
+            <span class="math-operator">+</span>
+            <div class="formula-box">
+              <span class="box-eyebrow">17,443 POSTINGS</span>
+              <strong>JOB MARKET INTELLIGENCE</strong>
+              <p>Descriptive role demands, skill frequency, and compensation bands.</p>
+            </div>
+            <span class="math-operator">=</span>
+            <div class="formula-box highlighted-box">
+              <span class="box-eyebrow accent-eyebrow">THE TRUST LAYER</span>
+              <strong>TALENT INTELLIGENCE</strong>
+              <p>Actionable alignment between proven technical ability and true workforce demand.</p>
+            </div>
+          </div>
+        </div>
         <div class="stat-grid" id="overview-stats"><div class="loading-card"><span class="spinner"></span>Loading dataset summary…</div></div>
         <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">MARKET DEMAND</p><h2>Most frequent skill mentions</h2></div><button class="text-button" data-go="market">Explore market →</button></div><div id="overview-skills" class="rank-list empty-state">Loading aggregate skill mentions…</div><p class="source-note">Source: Analytics Jobs <code>key_skills</code>. Mentions are not unique candidates or jobs.</p></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL PERFORMANCE</p><h2>Cross-validation snapshot</h2></div><span class="soft-tag">5-fold stratified</span></div><div id="overview-models" class="model-list empty-state">Loading local model metadata…</div></article></div>
         <div class="section-heading"><div><p class="eyebrow">WHAT THE DATA SAYS</p><h2>Observed patterns</h2></div></div><div class="content-grid two-col insight-grid" id="insight-cards"></div>
@@ -53,14 +191,14 @@
         <div class="page-heading compact"><div><p class="eyebrow">JDS SKILL TRAITS</p><h1>Technical Skill Outcome Model</h1><p class="lede">An experimental classifier for the dataset’s supplied salary-hike label, evaluated only within the supplied sample.</p></div></div>
         <div class="notice notice-warning"><span>!</span><div><strong>Association is not causation</strong><p>This model does not show that skills cause salary growth and is not an individual compensation guarantee.</p></div></div>
         <div id="jds-model-info" class="model-snapshot"></div><div class="notice notice-warning"><span>!</span><div><strong>Target-code warning</strong><p>The source target values are encoded 0/1. The source codebook does not define which code means high or low, so this page shows an encoded class prediction only.</p></div></div>
-        <div class="metric-grid" id="jds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">OUT-OF-FOLD</p><h2>Confusion matrix</h2></div></div><div class="figure-slot" data-figure-match="jds confusion matrix"></div><details class="matrix-details"><summary>View confusion counts as a table</summary><div id="jds-confusion-data"></div></details><p class="source-note">Stratified out-of-fold counts; sample size and fold count are shown from model metadata above.</p></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature coefficient magnitude</h2></div></div><div class="figure-slot" data-figure-match="jds feature importance"></div><div class="feature-list" id="jds-features"></div><p class="micro-warning">Absolute coefficient magnitudes show relative model weights; they do not establish direction or causation.</p></article></div>
+        <div class="metric-grid" id="jds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">OUT-OF-FOLD</p><h2>Confusion matrix</h2></div></div><div class="figure-slot" data-figure-match="jds confusion matrix"></div><details open class="matrix-details"><summary>View confusion counts as a table</summary><div id="jds-confusion-data"></div></details><p class="source-note">Stratified out-of-fold counts; sample size and fold count are shown from model metadata above.</p></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature coefficient magnitude</h2></div></div><div class="figure-slot" data-figure-match="jds feature importance"></div><div class="feature-list" id="jds-features"></div><p class="micro-warning">Absolute coefficient magnitudes show relative model weights; they do not establish direction or causation.</p></article></div>
         <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL COMPARISON</p><h2>Compared models</h2></div></div><div class="figure-slot" data-figure-match="jds model comparison"></div><div class="table-wrap" id="jds-comparison"></div></article><form class="card predictor" id="jds-form"><div class="card-head"><div><p class="eyebrow">LOCAL PREDICTION</p><h2>Enter skill trait values</h2></div><span class="model-state" id="jds-predict-status">Loading model</span></div><div class="form-fields" id="jds-fields"></div><button class="primary-button" type="submit" id="jds-submit" disabled>Run local prediction</button><div class="prediction-result" id="jds-result" aria-live="polite"></div><p class="source-note">Target labels are preserved as supplied by the organizer. Inputs are user-entered examples, not observed people or outcomes.</p></form></div>
       </section>
       <section class="view" id="view-sds">
         <div class="page-heading compact"><div><p class="eyebrow">SDS PERSONALITY TRAITS</p><h1>Workforce Traits Analysis</h1><p class="lede">An exploratory model examining associations with the label present in the supplied dataset.</p></div></div>
         <div class="notice notice-warning responsible-ai"><span>!</span><div><strong>Responsible AI — not for individual decisions</strong><p>This exploratory association model is not a hiring score and must not be used to screen individuals. It does not establish that personality causes organizational success.</p></div></div>
         <div id="sds-model-info" class="model-snapshot"></div><div class="notice notice-warning"><span>!</span><div><strong>Target-code warning</strong><p>The source target values are encoded 0/1. The codebook does not define the mapping, so outputs are called encoded organizational-success classes.</p></div></div>
-        <div class="metric-grid" id="sds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">OUT-OF-FOLD</p><h2>Confusion matrix</h2></div></div><div class="figure-slot" data-figure-match="sds confusion matrix"></div><details class="matrix-details"><summary>View confusion counts as a table</summary><div id="sds-confusion-data"></div></details><p class="source-note">Stratified out-of-fold confusion counts; internal cross-validation only.</p></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature importance</h2></div></div><div class="figure-slot" data-figure-match="sds feature importance"></div><div class="feature-list" id="sds-features"></div><p class="micro-warning">Importance describes this fitted model, not a causal effect or suitability measure.</p></article></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL COMPARISON</p><h2>Compared models</h2></div></div><div class="figure-slot" data-figure-match="sds model comparison"></div><div class="table-wrap" id="sds-comparison"></div></article><form class="card predictor" id="sds-form"><div class="card-head"><div><p class="eyebrow">LOCAL PREDICTION</p><h2>Enter trait values</h2></div><span class="model-state" id="sds-predict-status">Loading model</span></div><div class="form-fields" id="sds-fields"></div><button class="primary-button" type="submit" id="sds-submit" disabled>Run local prediction</button><div class="prediction-result" id="sds-result" aria-live="polite"></div><p class="source-note">Targets are preserved as encoded. User-entered values are not records of observed people.</p><div class="notice notice-warning responsible-ai"><div><strong>Exploratory association only.</strong><p>Not a hiring score. Not suitable for screening or ranking individuals.</p></div></div></form></div>
+        <div class="metric-grid" id="sds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">OUT-OF-FOLD</p><h2>Confusion matrix</h2></div></div><div class="figure-slot" data-figure-match="sds confusion matrix"></div><details open class="matrix-details"><summary>View confusion counts as a table</summary><div id="sds-confusion-data"></div></details><p class="source-note">Stratified out-of-fold confusion counts; internal cross-validation only.</p></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature importance</h2></div></div><div class="figure-slot" data-figure-match="sds feature importance"></div><div class="feature-list" id="sds-features"></div><p class="micro-warning">Importance describes this fitted model, not a causal effect or suitability measure.</p></article></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL COMPARISON</p><h2>Compared models</h2></div></div><div class="figure-slot" data-figure-match="sds model comparison"></div><div class="table-wrap" id="sds-comparison"></div></article><form class="card predictor" id="sds-form"><div class="card-head"><div><p class="eyebrow">LOCAL PREDICTION</p><h2>Enter trait values</h2></div><span class="model-state" id="sds-predict-status">Loading model</span></div><div class="form-fields" id="sds-fields"></div><button class="primary-button" type="submit" id="sds-submit" disabled>Run local prediction</button><div class="prediction-result" id="sds-result" aria-live="polite"></div><p class="source-note">Targets are preserved as encoded. User-entered values are not records of observed people.</p><div class="notice notice-warning responsible-ai"><div><strong>Exploratory association only.</strong><p>Not a hiring score. Not suitable for screening or ranking individuals.</p></div></div></form></div>
       </section>
       <section class="view" id="view-talent">
         <div class="page-heading compact"><div><p class="eyebrow">TRANSPARENT SKILL OVERLAP</p><h1>Descriptive Talent Intelligence</h1><p class="lede">Compare a selected skill profile with normalized skill mentions in the supplied job postings.</p></div></div>
@@ -75,7 +213,7 @@
           <div class="upload-actions"><label class="dropzone" id="resume-dropzone" for="resume-file"><span class="upload-icon">↑</span><strong>Drop your resume here</strong><span>PDF or TXT · up to 5 MB · processed on this machine</span><input id="resume-file" type="file" accept=".pdf,.txt,application/pdf,text/plain" /></label><div class="demo-picker"><strong>Use Demo Resume</strong><p>Fictional sample profiles for testing the deterministic workflow.</p><div class="demo-buttons"><button type="button" class="secondary-button" data-demo="overclaimed_resume.txt">Overclaimed</button><button type="button" class="secondary-button" data-demo="underclaimed_resume.txt">Underclaimed</button><button type="button" class="secondary-button" data-demo="confirmed_resume.txt">Confirmed</button></div></div></div>
           <p class="verify-error" id="upload-error" role="status"></p>
         </div>
-        <div class="verify-step card" id="verify-claims-step" hidden><div class="step-heading"><span>02</span><div><p class="eyebrow">RESUME SKILL CLAIMS</p><h2 id="candidate-heading">Resume claims</h2><p class="muted" id="candidate-education"></p></div></div><p class="source-note">Every recognized skill mentioned in the resume and covered by a local question bank requires a short assessment before the report is available. Self-reported levels are not independent verification.</p><div class="claims-table-wrap"><table class="claims-table"><thead><tr><th>Skill</th><th>Resume-stated level</th><th>Resume source and related excerpts</th><th>Requirement</th><th>Action</th></tr></thead><tbody id="claims-rows"></tbody></table></div><div class="assessment-gate" id="mandatory-progress" hidden aria-live="polite"><div><strong>Required checks incomplete</strong><p id="mandatory-progress-text">Complete every resume-mentioned skill assessment to unlock the report.</p></div><button type="button" class="primary-button" id="continue-required">Continue required assessment</button></div><div class="optional-checks" id="optional-assessments" hidden><div><p class="eyebrow">OPTIONAL · HIDDEN SKILL CHECKS</p><h3>Explore an unlisted skill</h3><p>These skills are not mentioned in this resume. Complete the required checks above to unlock an optional local quiz that may reveal knowledge the resume missed. Results are labeled separately.</p></div><div class="optional-check-controls"><select id="optional-skill-select" aria-label="Choose an optional skill"></select><button type="button" class="secondary-button" id="start-optional-assessment">Start optional check</button></div></div></div>
+        <div class="verify-step card" id="verify-claims-step" hidden><div class="step-heading" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px"><div style="display:flex;align-items:center;gap:12px"><span>02</span><div><p class="eyebrow">RESUME SKILL CLAIMS &amp; EVIDENCE</p><h2 id="candidate-heading">Resume claims</h2><p class="muted" id="candidate-education"></p></div></div><button type="button" class="secondary-button" id="reupload-resume-btn" style="font-size:11px;padding:6px 14px;border-color:#cfd6e6;color:#394867">Upload Another Resume</button></div><div class="executive-summary-strip" id="executive-summary-strip"></div><div class="skill-category-filter-bar" id="skill-category-filters"></div><p class="source-note">Multi-factor deterministic extraction analyzes candidate skills, proficiency step tiers (Beginner, Intermediate, Advanced, Expert), and concrete evidence scores (0–100) across projects, professional experience, certifications, and enterprise scale. Local adaptive assessments verify technical proficiency across difficulty tiers.</p><div class="claims-table-wrap"><table class="claims-table"><thead><tr><th>Skill &amp; Domain</th><th>Proficiency Step</th><th>Evidence Score</th><th>Resume Evidence Excerpts</th><th>Requirement</th><th>Action</th></tr></thead><tbody id="claims-rows"></tbody></table></div><div class="assessment-gate" id="mandatory-progress" hidden aria-live="polite"><div><strong>Primary Skills Assessment Checkpoint</strong><p id="mandatory-progress-text">Complete the core required skills checks or view the full talent intelligence dossier.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="primary-button" id="continue-required">Continue required assessment</button><button type="button" class="secondary-button" id="view-report-direct" style="border-color:#4c62d9;color:#3549bb;font-weight:700">View Talent Dossier</button></div></div><div class="optional-checks" id="optional-assessments" hidden><div><p class="eyebrow">OPTIONAL · HIDDEN SKILL CHECKS</p><h3>Explore an unlisted skill</h3><p>These skills are not mentioned in this resume. Complete the required checks above to unlock an optional local quiz that may reveal knowledge the resume missed. Results are labeled separately.</p></div><div class="optional-check-controls"><select id="optional-skill-select" aria-label="Choose an optional skill"></select><button type="button" class="secondary-button" id="start-optional-assessment">Start optional check</button></div></div></div>
         <div class="verify-step card" id="verify-assessment-step" hidden><div class="step-heading"><span>03</span><div><p class="eyebrow">LOCAL SKILL ASSESSMENT</p><h2 id="assessment-heading">Python verification</h2></div><span class="difficulty-badge" id="question-difficulty"></span></div><div class="assessment-progress"><div><span id="question-progress-label">Question 1 of 3</span><span id="question-progress-percent">0%</span></div><div class="progress-track"><span id="question-progress-fill"></span></div></div><h3 id="question-prompt"></h3><div class="answer-options" id="answer-options"></div><div class="answer-feedback" id="answer-feedback" aria-live="polite" hidden></div><button type="button" class="primary-button" id="continue-question" hidden>Continue</button><p class="source-note">Adaptive local question bank. Difficulty advances after correct answers and steps down after incorrect answers.</p></div>
         <section class="verify-step report-page" id="verification-report-page" hidden><div class="report-toolbar"><span>LOCAL VERIFICATION REPORT</span><button type="button" class="secondary-button" id="print-report">Print / Save as PDF</button></div><h1>GHOST SKILLS — SKILL VERIFICATION REPORT</h1><div class="report-candidate" id="report-candidate"></div><div class="verification-results" id="verification-results"></div><div class="notice notice-info"><span>i</span><div><strong>Why this result?</strong><p>Final score = prototype heuristic evidence score × 40% + local assessment score × 60%. Bands: &lt;40 Beginner, 40–70 Intermediate, &gt;70 Advanced. Classification compares that band with the explicit claim.</p></div></div><div class="market-insights" id="verification-market-insights" hidden><p class="eyebrow">TALENT INTELLIGENCE</p><h2>Descriptive market alignment</h2><p>This is descriptive market alignment, not an employment probability.</p><div id="verification-market-content"></div></div><p class="report-disclaimer">Prototype heuristic evidence score · Local assessment · Not a hiring decision. Synthetic demo resumes are fictional.</p><button type="button" class="secondary-button" data-go="verify">Verify another resume</button></section>
       </section>

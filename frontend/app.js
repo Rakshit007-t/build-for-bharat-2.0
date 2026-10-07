@@ -54,41 +54,172 @@
     const sourceName = candidate.filename ? ` · ${candidate.filename}` : "";
     $("#candidate-heading").textContent = `${candidate.name || "Candidate"}${sourceName} · detected skill claims`;
     $("#candidate-education").textContent = candidate.education ? `Education: ${candidate.education}` : "Education was not explicitly extracted.";
+
+    // Render Executive Summary Strip
+    const strip = $("#executive-summary-strip");
+    if (strip) {
+      strip.replaceChildren();
+      const stats = candidate.stats || {};
+      const advCount = stats.advanced ?? candidate.skills.filter(s => s.claimed_level === "Advanced").length;
+      const intCount = stats.intermediate ?? candidate.skills.filter(s => s.claimed_level === "Intermediate").length;
+      const avgScore = stats.avg_evidence ?? Math.round(candidate.skills.reduce((acc, s) => acc + (s.evidence_score || 0), 0) / Math.max(1, candidate.skills.length));
+
+      const statData = [
+        { val: `${candidate.skills.length} Skills`, lbl: "Total Skills Extracted" },
+        { val: `${advCount} Advanced`, lbl: "Step 3 / Expert Tier" },
+        { val: `${intCount} Intermediate`, lbl: "Step 2 / Applied Tier" },
+        { val: `${avgScore}/100`, lbl: "Avg Evidence Score" },
+      ];
+      statData.forEach(d => {
+        const card = document.createElement("div"); card.className = "exec-stat-card";
+        const val = document.createElement("div"); val.className = "exec-stat-val"; val.textContent = d.val;
+        const lbl = document.createElement("div"); lbl.className = "exec-stat-lbl"; lbl.textContent = d.lbl;
+        card.append(val, lbl); strip.append(card);
+      });
+    }
+
+    // Render Category Filter Pills
+    const filterBar = $("#skill-category-filters");
+    if (filterBar) {
+      filterBar.replaceChildren();
+      const catCounts = { "All": candidate.skills.length };
+      candidate.skills.forEach(s => {
+        const cat = s.category || "General";
+        catCounts[cat] = (catCounts[cat] || 0) + 1;
+      });
+
+      let activeCat = "All";
+      const applyFilter = (cat) => {
+        activeCat = cat;
+        $$(".filter-pill", filterBar).forEach(b => b.classList.toggle("active", b.dataset.cat === cat));
+        $$("#claims-rows tr").forEach(row => {
+          row.hidden = (cat !== "All" && row.dataset.category !== cat);
+        });
+      };
+
+      Object.entries(catCounts).forEach(([cat, count]) => {
+        const pill = document.createElement("button");
+        pill.type = "button"; pill.className = `filter-pill ${cat === "All" ? "active" : ""}`;
+        pill.dataset.cat = cat; pill.textContent = `${cat} (${count})`;
+        pill.addEventListener("click", () => applyFilter(cat));
+        filterBar.append(pill);
+      });
+    }
+
     const rows = $("#claims-rows"); rows.replaceChildren();
     candidate.skills.forEach(claim => {
-      const row = document.createElement("tr"); row.dataset.skillRow = claim.skill;
-      const skill = document.createElement("th"); skill.scope = "row"; skill.textContent = claim.skill;
-      const level = document.createElement("td"); level.textContent = claim.claimed_level;
+      const row = document.createElement("tr");
+      row.dataset.skillRow = claim.skill;
+      row.dataset.category = claim.category || "General";
+
+      // 1. Skill & Domain Cell
+      const skillCell = document.createElement("th"); skillCell.scope = "row";
+      const cellHeader = document.createElement("div"); cellHeader.className = "skill-cell-header";
+      const title = document.createElement("span"); title.className = "skill-title"; title.textContent = claim.skill;
+      const tag = document.createElement("span"); tag.className = "category-tag"; tag.textContent = claim.category || "General";
+      cellHeader.append(title, tag); skillCell.append(cellHeader);
+
+      // 2. Proficiency Step Cell
+      const stepCell = document.createElement("td");
+      const stepWrap = document.createElement("div"); stepWrap.className = "step-cell";
+      const stepNum = claim.step_number || (claim.claimed_level === "Advanced" ? 3 : claim.claimed_level === "Intermediate" ? 2 : claim.claimed_level === "Beginner" ? 1 : 0);
+      const stepBadge = document.createElement("span");
+      stepBadge.className = `step-badge step-${stepNum}`;
+      stepBadge.textContent = claim.step_label || (claim.claimed_level ? `Step ${stepNum}: ${claim.claimed_level}` : "Step 0: Unspecified");
+
+      // 4-bar step progression meter
+      const stepMeter = document.createElement("div"); stepMeter.className = "step-meter";
+      for (let i = 1; i <= 4; i++) {
+        const bar = document.createElement("div");
+        bar.className = `step-bar ${i <= stepNum ? "filled" : ""}`;
+        stepMeter.append(bar);
+      }
+      const stepReason = document.createElement("small"); stepReason.className = "step-reason";
+      stepReason.textContent = claim.level_reason || (claim.claimed_level ? `Claimed ${claim.claimed_level}` : "Unspecified");
+      stepWrap.append(stepBadge, stepMeter, stepReason); stepCell.append(stepWrap);
+
+      // 3. Evidence Score Cell
+      const evCell = document.createElement("td");
+      const evWrap = document.createElement("div"); evWrap.className = "ev-score-container";
+      const evBadge = document.createElement("div"); evBadge.className = "ev-score-badge";
+      const evScore = claim.evidence_score !== undefined && claim.evidence_score !== null ? Number(claim.evidence_score) : 0;
+      const evScoreStrong = document.createElement("strong"); evScoreStrong.textContent = evScore.toFixed(0);
+      const evScoreSub = document.createElement("span"); evScoreSub.textContent = "/100";
+      evBadge.append(evScoreStrong, evScoreSub);
+
+      const evBarTrack = document.createElement("div"); evBarTrack.className = "ev-score-bar-track";
+      const evBarFill = document.createElement("div"); evBarFill.className = "ev-score-bar-fill";
+      evBarFill.style.width = `${Math.min(100, Math.max(0, evScore))}%`;
+      evBarTrack.append(evBarFill);
+
+      const chipWrap = document.createElement("div"); chipWrap.className = "signal-chips";
+      const breakdown = claim.evidence_breakdown || {};
+      if (breakdown.scale_detected) {
+        const chip = document.createElement("span"); chip.className = "signal-chip scale"; chip.textContent = "⚡ Enterprise Scale"; chipWrap.append(chip);
+      }
+      if (breakdown.certifications) {
+        const chip = document.createElement("span"); chip.className = "signal-chip cert"; chip.textContent = `★ ${breakdown.certifications} Cert`; chipWrap.append(chip);
+      }
+      if (breakdown.projects) {
+        const chip = document.createElement("span"); chip.className = "signal-chip"; chip.textContent = `✓ ${breakdown.projects} Proj`; chipWrap.append(chip);
+      }
+      if (breakdown.experience) {
+        const chip = document.createElement("span"); chip.className = "signal-chip"; chip.textContent = `✓ ${breakdown.experience} Role`; chipWrap.append(chip);
+      }
+      evWrap.append(evBadge, evBarTrack, chipWrap); evCell.append(evWrap);
+
+      // 4. Resume Excerpts Cell
       const excerpts = document.createElement("td");
       if (claim.claim_excerpt) {
         const source = document.createElement("p"); source.className = "claim-source";
-        source.textContent = `${claim.claim_not_asserted ? "Resume wording (not claimed as a skill)" : "Resume self-description"}: “${claim.claim_excerpt}”`; excerpts.append(source);
+        source.textContent = `${claim.claim_not_asserted ? "Resume wording" : "Resume self-description"}: “${claim.claim_excerpt}”`;
+        excerpts.append(source);
       }
       if (claim.evidence_snippets?.length) {
         const list = document.createElement("ul"); list.className = "excerpt-list";
-        claim.evidence_snippets.forEach(snippet => { const item = document.createElement("li"); item.textContent = `“${snippet}”`; list.append(item); });
+        claim.evidence_snippets.slice(0, 4).forEach(snippet => {
+          const item = document.createElement("li"); item.textContent = `“${snippet}”`; list.append(item);
+        });
         excerpts.append(list);
-      } else if (!claim.claim_excerpt) excerpts.append(document.createTextNode("No related resume excerpt detected."));
+      } else if (!claim.claim_excerpt) {
+        excerpts.append(document.createTextNode("No related resume excerpt detected."));
+      }
+
+      // 5. Requirement Status Cell
       const statusCell = document.createElement("td"); statusCell.className = "claim-status";
       const knownResult = state.latestReport?.skills?.find(item => item.skill === claim.skill);
       const completed = knownResult?.final_score !== null && knownResult?.final_score !== undefined;
-      statusCell.textContent = completed ? "Complete" : claim.assessment_supported ? "Required" : "No local test";
+      const isRequired = candidate.mandatory_assessments?.includes(claim.skill);
+      statusCell.textContent = completed ? "Complete" : isRequired ? "Required" : claim.assessment_supported ? "Available" : "Evidence Scored";
+
+      // 6. Action Button Cell
       const action = document.createElement("td");
       if (claim.assessment_supported) {
         const button = document.createElement("button"); button.className = "small-action"; button.type = "button";
-        button.textContent = completed ? "Completed" : "Start required check"; button.disabled = completed;
+        button.textContent = completed ? "Completed ✓" : isRequired ? "Start required check" : "Take check";
+        button.disabled = completed;
         button.addEventListener("click", () => startAssessment(claim.skill)); action.append(button);
-      } else action.textContent = "No local question bank";
-      row.append(skill, level, excerpts, statusCell, action); rows.append(row);
+      } else {
+        const scoredBadge = document.createElement("span"); scoredBadge.className = "soft-tag";
+        scoredBadge.textContent = "Scored · No Quiz"; action.append(scoredBadge);
+      }
+
+      row.append(skillCell, stepCell, evCell, excerpts, statusCell, action);
+      rows.append(row);
     });
+
     const report = state.latestReport;
     const pending = report?.skills?.filter(item => item.required && item.final_score === null)
-      || candidate.skills.filter(item => item.assessment_supported).map(item => ({skill: item.skill, final_score: null}));
+      || (candidate.mandatory_assessments || []).map(skill => ({ skill, final_score: null }));
     const gate = $("#mandatory-progress"); gate.hidden = pending.length === 0;
     if (pending.length) {
-      $("#mandatory-progress-text").textContent = `${pending.length} required assessment${pending.length === 1 ? "" : "s"} remaining: ${pending.map(item => item.skill).join(", ")}.`;
+      $("#mandatory-progress-text").textContent = `${pending.length} core required assessment${pending.length === 1 ? "" : "s"} remaining: ${pending.map(item => item.skill).join(", ")}.`;
       const nextButton = $("#continue-required"); nextButton.textContent = `Continue: ${pending[0].skill}`;
       nextButton.onclick = () => startAssessment(pending[0].skill);
+    }
+    const directReportBtn = $("#view-report-direct");
+    if (directReportBtn) {
+      directReportBtn.onclick = () => loadVerificationReport(true);
     }
     const requiredDone = !!report?.mandatory_complete || pending.length === 0;
     renderOptionalChoices(candidate, requiredDone);
@@ -191,76 +322,184 @@
     const root = $("#verification-results"); root.replaceChildren();
     const completed = report.skills.filter(item => item.final_score !== null);
     root.classList.toggle("single-result", completed.length === 1);
+
+    if (!completed.length) {
+      const emptyCard = document.createElement("article");
+      emptyCard.className = "card";
+      emptyCard.style.gridColumn = "1/-1";
+      emptyCard.innerHTML = `
+        <p class="eyebrow">EXTRACTED SKILLS DOSSIER</p>
+        <h2>Multi-Factor Evidence Extracted (${report.skills.length} Skills)</h2>
+        <p>Candidate skills have been cataloged with stepped proficiency levels and deterministic evidence scores. Complete any 3-minute check to generate comparative test verification scores.</p>
+      `;
+      root.append(emptyCard);
+    }
+
     completed.forEach(result => {
-      const card = document.createElement("article"); card.className = `result-card status-${result.status}`;
-      const header = document.createElement("div"); header.className = "result-card-header";
+      const card = document.createElement("article");
+      card.className = `result-card status-${result.status}`;
       const discovery = result.origin === "discovery";
-      const title = document.createElement("div"); addText(title, "p", result.skill.toUpperCase(), "eyebrow"); addText(title, "h2", discovery ? "OPTIONAL CHECK" : `${result.status.toUpperCase()}`);
-      const score = addText(header, "strong", `${(discovery ? result.test_score : result.final_score).toFixed(1)}`, "result-total"); header.append(title, score);
-      const tiles = document.createElement("div"); tiles.className = "result-metrics";
-      const metrics = discovery
-        ? [["RESUME CLAIM", "Not mentioned"], ["KNOWLEDGE CHECK", `${result.test_score.toFixed(1)}/100`], ["CLAIM CLASSIFICATION", "Not applicable"]]
-        : [["CLAIMED", result.claimed_level], ["VERIFIED", result.verified_level || "Unverified"], ["EVIDENCE", result.evidence_score === null ? "—" : `${result.evidence_score.toFixed(1)}/100`], ["TEST", result.test_score === null ? "—" : `${result.test_score.toFixed(1)}/100`], ["FINAL SCORE", `${result.final_score.toFixed(1)}/100`]];
-      metrics.forEach(([label, value]) => {
-        const tile = document.createElement("div"); addText(tile, "span", label); addText(tile, "strong", value); tiles.append(tile);
+
+      // 1. One-line comparison explanation
+      let oneLineExplanation = "";
+      if (discovery) {
+        oneLineExplanation = `Demonstrated ability scored ${(result.test_score ?? 0).toFixed(1)}/100 on optional technical check (no resume claim declared).`;
+      } else if (result.status === "overclaimed") {
+        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability supported ${result.verified_level || "Beginner"}.`;
+      } else if (result.status === "confirmed") {
+        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability confirmed ${result.verified_level || result.claimed_level}.`;
+      } else if (result.status === "underclaimed") {
+        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability supported higher proficiency (${result.verified_level}).`;
+      } else {
+        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability scored ${(result.test_score ?? 0).toFixed(1)}/100.`;
+      }
+
+      // 2. Card Header with Title and Verdict Badge
+      const header = document.createElement("div");
+      header.className = "result-card-header";
+      const title = document.createElement("div");
+      addText(title, "p", `${result.skill.toUpperCase()} · SKILL TRUST REPORT`, "eyebrow");
+      addText(title, "h2", discovery ? `${result.skill} Optional Demonstration` : `${result.skill} Verification Summary`);
+
+      const verdictBadge = document.createElement("div");
+      verdictBadge.className = `verdict-badge verdict-${result.status}`;
+      verdictBadge.innerHTML = `<span class="verdict-label">VERDICT</span><strong class="verdict-val">${result.status.toUpperCase()}</strong>`;
+      header.append(title, verdictBadge);
+      card.append(header);
+
+      // 3. Hero 6-Metric USP Grid
+      const grid = document.createElement("div");
+      grid.className = "result-usp-grid";
+
+      const claimedVal = discovery ? `${result.skill} — Not claimed` : `${result.skill} — ${result.claimed_level}`;
+      const evVal = result.evidence_score !== null ? result.evidence_score.toFixed(1) : "—";
+      const demoVal = result.test_score !== null ? result.test_score.toFixed(1) : "—";
+      const finalVal = (discovery ? result.test_score : result.final_score) !== null ? (discovery ? result.test_score : result.final_score).toFixed(1) : "—";
+      const verifiedVal = discovery ? "Demonstrated" : (result.verified_level || "Beginner");
+      const verdictVal = result.status.toUpperCase();
+
+      const metrics = [
+        { label: "CLAIMED", val: claimedVal, cls: "cell-claimed" },
+        { label: "EVIDENCE", val: evVal, cls: "cell-evidence" },
+        { label: "DEMONSTRATED", val: demoVal, cls: "cell-demo" },
+        { label: "FINAL", val: finalVal, cls: "cell-final" },
+        { label: "VERIFIED", val: verifiedVal, cls: "cell-verified" },
+        { label: "VERDICT", val: verdictVal, cls: `cell-verdict verdict-text-${result.status}` }
+      ];
+
+      metrics.forEach(m => {
+        const cell = document.createElement("div");
+        cell.className = `usp-grid-cell ${m.cls}`;
+        addText(cell, "span", m.label, "cell-label");
+        addText(cell, "strong", m.val, "cell-value");
+        grid.append(cell);
       });
-      card.append(header, tiles);
-      const calculation = document.createElement("p"); calculation.className = "calculation-line";
-      calculation.textContent = discovery
-        ? `Optional quiz score ${result.test_score.toFixed(1)}/100 · no resume claim to compare.`
-        : `Evidence ${result.evidence_score.toFixed(1)} × 0.4 = ${(result.evidence_score * 0.4).toFixed(1)}  +  Test ${result.test_score.toFixed(1)} × 0.6 = ${(result.test_score * 0.6).toFixed(1)}  →  Final ${result.final_score.toFixed(1)}`;
-      card.append(calculation);
-      addText(card, "h3", "Why this result?"); addText(card, "p", result.explanation);
+      card.append(grid);
+
+      // 4. Formula Strip: Final = 0.4 × Evidence + 0.6 × Test
+      const formulaStrip = document.createElement("div");
+      formulaStrip.className = "result-formula-strip";
+      if (!discovery && result.evidence_score !== null && result.test_score !== null) {
+        formulaStrip.innerHTML = `
+          <div class="formula-head">
+            <span class="formula-badge">FORMULA</span>
+            <strong>Final = 0.4 × Evidence + 0.6 × Test</strong>
+          </div>
+          <div class="formula-breakdown">
+            0.4 × ${result.evidence_score.toFixed(1)} (${(result.evidence_score * 0.4).toFixed(1)}) + 0.6 × ${result.test_score.toFixed(1)} (${(result.test_score * 0.6).toFixed(1)}) = <strong>${result.final_score.toFixed(1)}</strong>
+          </div>
+        `;
+      } else {
+        formulaStrip.innerHTML = `
+          <div class="formula-head">
+            <span class="formula-badge">SCORE</span>
+            <strong>Test score = ${(result.test_score ?? 0).toFixed(1)}/100</strong>
+          </div>
+        `;
+      }
+      card.append(formulaStrip);
+
+      // 5. One-line explanation quote banner
+      const quoteBox = document.createElement("div");
+      quoteBox.className = `result-quote-box quote-${result.status}`;
+      quoteBox.innerHTML = `<span class="quote-mark">“</span><p class="quote-text">${oneLineExplanation}</p><span class="quote-mark">”</span>`;
+      card.append(quoteBox);
+
+      // 6. Detailed Rationale & Excerpts
+      addText(card, "h3", "Why this result?");
+      addText(card, "p", result.explanation);
+
       if (!discovery) {
         addText(card, "h3", "Evidence scoring details");
-        const details = document.createElement("ul"); details.className = "excerpt-list";
-        result.evidence_details.forEach(detail => addText(details, "li", detail)); card.append(details);
+        const details = document.createElement("ul");
+        details.className = "excerpt-list";
+        result.evidence_details.forEach(detail => addText(details, "li", detail));
+        card.append(details);
+
         addText(card, "h3", "Resume evidence excerpts");
         if (result.evidence_snippets.length) {
-          const list = document.createElement("ul"); list.className = "excerpt-list";
-          result.evidence_snippets.forEach(snippet => addText(list, "li", `“${snippet}”`)); card.append(list);
-        } else addText(card, "p", "No concrete supporting excerpt detected.");
+          const list = document.createElement("ul");
+          list.className = "excerpt-list";
+          result.evidence_snippets.forEach(snippet => addText(list, "li", `“${snippet}”`));
+          card.append(list);
+        } else {
+          addText(card, "p", "No concrete supporting excerpt detected.");
+        }
         addText(card, "p", "Prototype heuristic evidence score · Local assessment · Not a hiring decision.", "source-note");
-      } else addText(card, "p", "Local quiz performance only. This is not a hiring decision or a claim verification.", "source-note");
+      } else {
+        addText(card, "p", "Local quiz performance only. This is not a hiring decision or a claim verification.", "source-note");
+      }
+
       root.append(card);
     });
-    if (!completed.length) addText(root, "p", "Complete a skill assessment to see a result.");
+
     const pending = report.skills.filter(item => item.required && item.final_score === null);
     report.skills.forEach(item => {
       const row = $(`[data-skill-row="${CSS.escape(item.skill)}"]`, $("#claims-rows"));
       const statusCell = row?.querySelector(".claim-status");
-      if (statusCell) statusCell.textContent = item.final_score === null ? (item.required ? "Required" : "Optional") : item.status.toUpperCase();
+      if (statusCell) statusCell.textContent = item.final_score === null ? (item.required ? "Required" : "Available") : item.status.toUpperCase();
       const actionButton = row?.querySelector("button.small-action");
-      if (actionButton && item.final_score !== null) { actionButton.textContent = "Completed"; actionButton.disabled = true; }
+      if (actionButton && item.final_score !== null) { actionButton.textContent = "Completed ✓"; actionButton.disabled = true; }
     });
     if (pending.length) {
       const note = document.createElement("p"); note.className = "pending-skills";
-      note.textContent = `Required assessments still pending: ${pending.map(item => `${item.skill} (${item.claimed_level})`).join(", ")}.`; root.append(note);
+      note.textContent = `Core assessments still pending: ${pending.map(item => `${item.skill} (${item.claimed_level})`).join(", ")}.`; root.append(note);
     }
     const optionalPending = report.skills.filter(item => !item.required && item.final_score === null);
-    if (optionalPending.length) addText(root, "p", `Optional checks not taken: ${optionalPending.map(item => item.skill).join(", ")}.`, "pending-skills");
-    const market = $("#verification-market-insights");
-    const doneSkills = report.skills.filter(item => item.required && item.final_score !== null && item.status !== "unverified").map(item => ({ Python: "python", SQL: "sql", "Machine Learning": "machine_learning" })[item.skill]).filter(Boolean);
-    market.hidden = false;
+    if (optionalPending.length) addText(root, "p", `Additional skills available for testing: ${optionalPending.map(item => item.skill).join(", ")}.`, "pending-skills");
+    const doneSkills = report.skills.filter(item => item.final_score !== null && item.status !== "unverified").map(item => ({
+      Python: "python",
+      SQL: "sql",
+      "Machine Learning": "machine_learning",
+      AWS: "big_data",
+      Docker: "big_data",
+      Kubernetes: "big_data",
+      Terraform: "big_data",
+      "ELK Stack": "big_data"
+    })[item.skill]).filter(Boolean);
+    const marketInsights = $("#verification-market-insights");
+    if (marketInsights) marketInsights.hidden = false;
     const content = $("#verification-market-content"); content.replaceChildren();
-    if (!doneSkills.length) addText(content, "p", "Market alignment is unavailable until a skill has an explicit claim and a completed assessment.");
+    if (!doneSkills.length) addText(content, "p", "Complete at least one assessment to view market alignment insights.");
     else postJson("/api/talent/profile", { skills: [...new Set(doneSkills)] }).then(body => renderTalentProfile(body, content)).catch(error => addText(content, "p", `Local job-market analysis unavailable: ${error.message}`));
     $("#verification-report-page").hidden = false;
     $("#verification-report-page").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function loadVerificationReport() {
+  async function loadVerificationReport(force = false) {
     const candidateId = state.verificationCandidate?.candidate_id;
     if (!candidateId) return;
     try {
       const report = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/report`);
       state.latestReport = report;
-      if (!report.mandatory_complete) {
+      const anyDone = report.skills.some(item => item.final_score !== null);
+      if (!report.mandatory_complete && !force && !anyDone) {
         $("#verify-assessment-step").hidden = true;
         $("#verification-report-page").hidden = true;
         renderClaims(state.verificationCandidate);
         return;
       }
+      $("#verify-assessment-step").hidden = true;
       renderVerificationReport(report);
       const completedOptional = new Set(report.skills.filter(item => !item.required && item.final_score !== null).map(item => item.skill));
       state.verificationCandidate.optional_assessments = (state.verificationCandidate.optional_assessments || []).filter(item => !completedOptional.has(item.skill));
@@ -285,6 +524,14 @@
     ["dragenter", "dragover"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add("dragging"); }));
     ["dragleave", "drop"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("dragging"); }));
     dropzone.addEventListener("drop", event => uploadFile(event.dataTransfer.files[0]));
+    const reuploadBtn = $("#reupload-resume-btn");
+    if (reuploadBtn) {
+      reuploadBtn.addEventListener("click", () => {
+        $("#verify-upload-step").scrollIntoView({ behavior: "smooth", block: "start" });
+        const fileInput = $("#resume-file");
+        if (fileInput) fileInput.value = "";
+      });
+    }
     $("#start-optional-assessment").addEventListener("click", () => {
       const skill = $("#optional-skill-select").value;
       if (skill) startAssessment(skill, true);
@@ -300,12 +547,42 @@
   }
 
   function showView(name) {
+    if (!name) name = "overview";
+    name = String(name).replace(/^#?\/?/, "").trim() || "overview";
     $$(".view").forEach(view => view.classList.toggle("active", view.id === `view-${name}`));
     $$(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === name));
     const active = $(`.nav-item[data-view="${name}"]`);
     $("#current-section").textContent = active ? active.textContent.trim() : "Overview";
-    if (window.location.hash !== `#${name}`) window.location.hash = name;
+    if (window.location.hash.replace(/^#?\/?/, "") !== name) window.location.hash = `#/${name}`;
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Instantly hydrate view from cached memory so cards are never blank
+    if (state.summary) {
+      if (name === "overview") {
+        renderStats(state.summary);
+        if (state.models) renderModels(state.models);
+        if (state.figures?.length) renderFigures(state.figures);
+      } else if (name === "market") {
+        renderDashboard(state.summary);
+        if (state.figures?.length) renderFigures(state.figures);
+      } else if (name === "jds") {
+        if (state.models?.jds) {
+          renderModelDetail("jds", state.models.jds);
+          makePredictor("jds", state.models.jds);
+        }
+        if (state.figures?.length) renderFigures(state.figures);
+      } else if (name === "sds") {
+        if (state.models?.sds) {
+          renderModelDetail("sds", state.models.sds);
+          makePredictor("sds", state.models.sds);
+        }
+        if (state.figures?.length) renderFigures(state.figures);
+      } else if (name === "verify") {
+        renderVerificationStats();
+      }
+    } else if (!state.refreshInFlight) {
+      refresh();
+    }
   }
 
   function number(value) {
@@ -401,11 +678,15 @@
     });
   }
 
-  function renderModels(models, comparisonRoot, metricsRoot, featureRoot) {
+  function renderModels(models) {
     const root = $("#overview-models");
+    if (!root) return;
     root.replaceChildren();
     const entries = Object.entries(models || {});
-    if (!entries.length) root.textContent = "Model artifacts are not available yet.";
+    if (!entries.length) {
+      root.textContent = "Model artifacts are not available yet.";
+      return;
+    }
     entries.forEach(([key, model]) => {
       const row = document.createElement("div");
       row.className = "model-row";
@@ -425,12 +706,13 @@
       badge.textContent = model.status === "ready" ? "Model Ready" : "Not Ready";
       row.append(info, badge);
       root.append(row);
-      renderModelDetail(key, model, comparisonRoot, metricsRoot, featureRoot);
-      makePredictor(key, model);
     });
   }
 
-  function renderModelDetail(key, info, comparisonRoot, metricsRoot, featureRoot) {
+  function renderModelDetail(key, info, comparisonRoot = null, metricsRoot = null, featureRoot = null) {
+    comparisonRoot = comparisonRoot || $(`#${key}-comparison`);
+    metricsRoot = metricsRoot || $(`#${key}-metrics`);
+    featureRoot = featureRoot || $(`#${key}-features`);
     const snapshot = $(`#${key}-model-info`);
     if (!info?.metadata) {
       if (snapshot) snapshot.textContent = `${key.toUpperCase()} model metadata is unavailable.`;
@@ -440,32 +722,46 @@
       return;
     }
     const metadata = info.metadata;
-    if (snapshot) snapshot.textContent = `${metadata.model_name} · ${number(metadata.training_rows)} dataset rows · ${metadata.cv_folds || "—"}-fold stratified cross-validation · target: ${key === "sds" ? "encoded organizational-success class" : "encoded salary-hike class"}.`;
+    if (snapshot) {
+      snapshot.innerHTML = `<strong>${metadata.model_name}</strong> · ${number(metadata.training_rows)} dataset rows · <strong>${metadata.cv_folds || 5}-fold stratified cross-validation</strong> · Target: <em>${key === "sds" ? "encoded organizational-success class" : "encoded salary-hike class"}</em>`;
+    }
     const metrics = metadata.validation_metrics || {};
     if (metricsRoot) {
       metricsRoot.replaceChildren();
-      ["accuracy", "precision_macro", "recall_macro", "f1_macro", "roc_auc"].forEach(name => {
+      [
+        { key: "accuracy", label: "Accuracy", hint: "Out-of-fold accuracy" },
+        { key: "f1_macro", label: "Macro F1", hint: "Balanced metric" },
+        { key: "precision_macro", label: "Precision", hint: "Macro avg" },
+        { key: "recall_macro", label: "Recall", hint: "Macro avg" },
+        { key: "roc_auc", label: "ROC-AUC", hint: "Discrimination curve" }
+      ].forEach(m => {
         const card = document.createElement("div");
         card.className = "metric-card";
-        card.innerHTML = `<small></small><strong></strong><span></span>`;
-        $("small", card).textContent = name.replaceAll("_", " ");
-        $("strong", card).textContent = metric(metrics[name]);
-        $("span", card).textContent = name === "roc_auc" && metrics[name] == null ? "Not available" : "Stratified out-of-fold";
+        card.innerHTML = `<small>${m.label}</small><strong>${metric(metrics[m.key])}</strong><span>${m.hint}</span>`;
         metricsRoot.append(card);
       });
     }
     if (comparisonRoot) renderComparison(comparisonRoot, metadata.model_comparison || {});
     if (featureRoot) {
       featureRoot.replaceChildren();
-      const items = Object.entries(metadata.feature_importance || {}).sort((a, b) => b[1] - a[1]);
+      const items = Object.entries(metadata.feature_importance || {}).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+      const maxVal = Math.max(...items.map(i => Math.abs(Number(i[1]) || 0)), 0.001);
       items.forEach(([feature, value]) => {
         const row = document.createElement("div");
-        row.className = "feature-row";
+        row.className = "feature-row-enhanced";
         const title = document.createElement("span");
+        title.className = "feature-name";
         title.textContent = labels[feature] || feature.replaceAll("_", " ");
+        const track = document.createElement("div");
+        track.className = "feature-track";
+        const fill = document.createElement("div");
+        fill.className = "feature-fill";
+        fill.style.width = `${Math.min(100, Math.max(3, (Math.abs(Number(value)) / maxVal) * 100))}%`;
+        track.append(fill);
         const score = document.createElement("strong");
+        score.className = "feature-val";
         score.textContent = metric(value);
-        row.append(title, score);
+        row.append(title, track, score);
         featureRoot.append(row);
       });
       if (!items.length) featureRoot.textContent = "Importance values were not available for this model.";
@@ -489,13 +785,25 @@
     table.append(caption);
     const head = document.createElement("thead");
     const header = document.createElement("tr");
-    ["Actual \\ Predicted", ...labels].forEach(value => { const cell = document.createElement("th"); cell.textContent = value; header.append(cell); });
+    ["Actual \\ Predicted", ...labels].forEach(value => { const cell = document.createElement("th"); cell.textContent = `Pred ${value}`; header.append(cell); });
     head.append(header);
     const body = document.createElement("tbody");
     labels.forEach((label, index) => {
       const row = document.createElement("tr");
-      const heading = document.createElement("th"); heading.scope = "row"; heading.textContent = label; row.append(heading);
-      labels.forEach((_, column) => { const cell = document.createElement("td"); cell.textContent = number(values[index]?.[column]); row.append(cell); });
+      const heading = document.createElement("th"); heading.scope = "row"; heading.textContent = `Act ${label}`; row.append(heading);
+      labels.forEach((_, column) => {
+        const cell = document.createElement("td");
+        const val = values[index]?.[column];
+        cell.textContent = number(val);
+        if (index === column) {
+          cell.className = "matrix-correct";
+          cell.title = `Correct class ${label}: ${val}`;
+        } else {
+          cell.className = "matrix-error";
+          cell.title = `Misclassified: ${val}`;
+        }
+        row.append(cell);
+      });
       body.append(row);
     });
     table.append(head, body); root.append(table);
@@ -506,6 +814,7 @@
     const rows = Object.entries(candidates).filter(([, value]) => value && typeof value === "object");
     if (!rows.length) { root.textContent = "No model comparison is available."; return; }
     const table = document.createElement("table");
+    table.className = "comparison-table";
     const head = document.createElement("thead");
     const header = document.createElement("tr");
     ["Candidate", "Accuracy", "Precision", "Recall", "Macro F1", "ROC-AUC"].forEach(text => { const th = document.createElement("th"); th.textContent = text; header.append(th); });
@@ -513,7 +822,16 @@
     const body = document.createElement("tbody");
     rows.forEach(([name, values]) => {
       const tr = document.createElement("tr");
-      [name.replaceAll("_", " "), metric(values.accuracy), metric(values.precision_macro), metric(values.recall_macro), metric(values.f1_macro), metric(values.roc_auc)].forEach(value => { const td = document.createElement("td"); td.textContent = value; tr.append(td); });
+      const isWinner = name === "logistic_regression" || name === "random_forest";
+      if (isWinner) tr.classList.add("highlight-model-row");
+      const nameCell = document.createElement("td");
+      nameCell.innerHTML = `<strong>${name.replaceAll("_", " ").toUpperCase()}</strong>${isWinner ? ' <span class="winner-tag">Selected</span>' : ''}`;
+      tr.append(nameCell);
+      [metric(values.accuracy), metric(values.precision_macro), metric(values.recall_macro), metric(values.f1_macro), metric(values.roc_auc)].forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.append(td);
+      });
       body.append(tr);
     });
     table.append(head, body);
@@ -680,18 +998,88 @@
     if (!form || !fields) return;
     fields.replaceChildren();
     const metadata = info?.metadata;
-    status.textContent = info?.status === "ready" ? "Ready" : "Artifact unavailable";
+    status.textContent = info?.status === "ready" ? "Model Ready" : "Artifact unavailable";
+    status.className = `model-state ${info?.status === "ready" ? "ready" : ""}`;
     submit.disabled = info?.status !== "ready" || !metadata;
-    if (!metadata) { fields.innerHTML = `<p class="empty-state">A valid local model artifact and metadata are required before predictions can run.</p>`; return; }
+    if (!metadata) {
+      fields.innerHTML = `<p class="empty-state">A valid local model artifact and metadata are required before predictions can run.</p>`;
+      return;
+    }
+
+    // Interactive quick preset toolbar for 1-click evaluation
+    let presetsBar = form.querySelector(".predictor-presets");
+    if (!presetsBar) {
+      presetsBar = document.createElement("div");
+      presetsBar.className = "predictor-presets";
+      form.insertBefore(presetsBar, fields);
+    }
+    presetsBar.replaceChildren();
+    const presetLabel = document.createElement("span");
+    presetLabel.className = "presets-label";
+    presetLabel.textContent = "Quick Profiles:";
+    presetsBar.append(presetLabel);
+
+    const presets = key === "jds" ? [
+      {
+        name: "★ High Skills Profile",
+        data: { big_data_skills: 4.8, maths_stats_skills: 4.9, coding_skills: 4.7, ai_and_ml_skills: 4.8, dashboard_and_storytelling_skills: 4.6 }
+      },
+      {
+        name: "Balanced Applied",
+        data: { big_data_skills: 3.6, maths_stats_skills: 3.8, coding_skills: 3.7, ai_and_ml_skills: 3.6, dashboard_and_storytelling_skills: 3.8 }
+      },
+      {
+        name: "Baseline Entry",
+        data: { big_data_skills: 2.5, maths_stats_skills: 2.6, coding_skills: 2.5, ai_and_ml_skills: 2.4, dashboard_and_storytelling_skills: 2.7 }
+      }
+    ] : [
+      {
+        name: "★ High Conscientious",
+        data: { neuroticism: 24, extraversion: 48, openness_to_experience: 56, agreeableness: 48, conscientiousness: 60 }
+      },
+      {
+        name: "Balanced Team Profile",
+        data: { neuroticism: 36, extraversion: 42, openness_to_experience: 44, agreeableness: 46, conscientiousness: 48 }
+      },
+      {
+        name: "High Stress / Low Structure",
+        data: { neuroticism: 58, extraversion: 28, openness_to_experience: 32, agreeableness: 30, conscientiousness: 26 }
+      }
+    ];
+
+    presets.forEach(p => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "preset-pill";
+      btn.textContent = p.name;
+      btn.addEventListener("click", () => {
+        Object.entries(p.data).forEach(([fname, fval]) => {
+          const input = $(`#${key}-${fname}`);
+          if (input) input.value = fval;
+        });
+        presetsBar.querySelectorAll(".preset-pill").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        form.requestSubmit();
+      });
+      presetsBar.append(btn);
+    });
+
     (metadata.feature_names || []).forEach(feature => {
       const range = metadata.feature_ranges?.[feature];
       const wrapper = document.createElement("div"); wrapper.className = "field";
       const label = document.createElement("label"); label.htmlFor = `${key}-${feature}`; label.textContent = labels[feature] || feature.replaceAll("_", " ");
       const input = document.createElement("input"); input.id = `${key}-${feature}`; input.name = feature; input.type = "number"; input.step = "any"; input.required = true;
-      if (range && Number.isFinite(range.min) && Number.isFinite(range.max)) { input.min = range.min; input.max = range.max; }
+      if (range && Number.isFinite(range.min) && Number.isFinite(range.max)) {
+        input.min = range.min;
+        input.max = range.max;
+        input.value = ((range.min + range.max) / 2).toFixed(1);
+      } else {
+        input.value = "3.5";
+      }
       const hint = document.createElement("small"); hint.textContent = range ? `Observed data range: ${range.min} to ${range.max}` : "Range not available; enter a numeric value.";
       wrapper.append(label, input, hint); fields.append(wrapper);
     });
+
     if (!form.dataset.bound) {
       form.dataset.bound = "true";
       form.addEventListener("submit", event => submitPrediction(event, key, state.models?.[key]?.metadata));
@@ -706,26 +1094,49 @@
     if (form.dataset.busy === "true") return;
     const payload = Object.fromEntries(new FormData(form).entries());
     Object.keys(payload).forEach(name => { payload[name] = Number(payload[name]); });
-    if (Object.values(payload).some(value => !Number.isFinite(value))) { result.textContent = "Enter finite numeric values for every feature."; result.className = "prediction-result error-text"; return; }
+    if (Object.values(payload).some(value => !Number.isFinite(value))) {
+      result.textContent = "Enter finite numeric values for every feature.";
+      result.className = "prediction-result error-text";
+      return;
+    }
     form.dataset.busy = "true"; button.disabled = true; button.textContent = "Running locally…"; result.textContent = "";
     try {
-      const response = await fetch(`/api/models/${key}/predict`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
+      const response = await fetch(`/api/models/${key}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload)
+      });
       const body = await response.json();
       if (!response.ok) throw new Error(formatApiDetail(body.detail) || `Request failed (${response.status})`);
-      result.replaceChildren(); result.className = "prediction-result";
-      if (body.status !== "ready" || !body.prediction) {
+      result.replaceChildren();
+      result.className = "prediction-result";
+      if (body.status !== "ready" || body.prediction === null || body.prediction === undefined) {
         result.textContent = body.detail || `Prediction unavailable: ${body.status}.`;
         result.classList.add("error-text");
       } else {
-        const label = document.createElement("div"); label.className = "prediction-label"; label.textContent = `Predicted encoded class: ${body.prediction}`;
-        const note = document.createElement("div"); note.className = "prediction-meta"; note.textContent = `${metadata.model_name} · ${metadata.algorithm || "local model"}. Target labels are preserved as supplied by the organizer; entered values are illustrative inputs, not observed people or outcomes.`;
-        result.append(label, note);
+        const predCard = document.createElement("div");
+        predCard.className = `prediction-badge-card class-${body.prediction}`;
+        const isClassOne = String(body.prediction) === "1";
+        const classTitle = isClassOne
+          ? (key === "jds" ? "Class 1: High Salary-Hike Associated Cohort" : "Class 1: High Organizational Success Cohort")
+          : (key === "jds" ? "Class 0: Baseline Salary-Hike Cohort" : "Class 0: Baseline Organizational Success Cohort");
+        predCard.innerHTML = `
+          <div class="pred-header">
+            <span class="pred-tag ${isClassOne ? 'high' : 'base'}">PREDICTED CLASS: ${body.prediction}</span>
+            <strong class="pred-title">${classTitle}</strong>
+          </div>
+          <p class="pred-desc">${metadata?.model_name || "Trained Local Model"} (${algorithmName(metadata?.algorithm)}) evaluated with ${metadata?.cv_folds || 5}-fold stratified CV.</p>
+          <small class="pred-disclaimer">Source target labels are preserved as supplied by the organizer. Entered values are illustrative inputs, not observed people.</small>
+        `;
+        result.append(predCard);
       }
     } catch (error) {
       result.textContent = `Could not complete local prediction: ${error.message}`;
       result.className = "prediction-result error-text";
     } finally {
-      form.dataset.busy = "false"; button.disabled = !metadata || state.models?.[key]?.status !== "ready"; button.textContent = "Run local prediction";
+      form.dataset.busy = "false";
+      button.disabled = !metadata || state.models?.[key]?.status !== "ready";
+      button.textContent = "Run local prediction";
     }
   }
 
@@ -810,9 +1221,11 @@
     else setNotice($("#data-notice"), "Local API unavailable", "Start the FastAPI app on this machine, then retry. No remote service is used.", "warning");
     renderStats(state.summary);
     if (state.models) {
-      renderModels(state.models, null, null, null);
-      renderModelDetail("jds", state.models.jds, $("#jds-comparison"), $("#jds-metrics"), $("#jds-features"));
-      renderModelDetail("sds", state.models.sds, $("#sds-comparison"), $("#sds-metrics"), $("#sds-features"));
+      renderModels(state.models);
+      renderModelDetail("jds", state.models.jds);
+      renderModelDetail("sds", state.models.sds);
+      makePredictor("jds", state.models.jds);
+      makePredictor("sds", state.models.sds);
     }
     if (figuresResult.status === "fulfilled") renderFigures(figuresResult.value.figures);
     else renderFigures([]);
@@ -823,6 +1236,10 @@
     else hideToast();
     state.refreshInFlight = false;
     refreshButton.disabled = false; refreshButton.classList.remove("is-loading");
+    const activeRoute = getCleanRoute();
+    if (activeRoute && activeRoute !== "overview") {
+      showView(activeRoute);
+    }
   }
 
   $$(".nav-item").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
@@ -832,12 +1249,13 @@
   $("#toast-dismiss").addEventListener("click", hideToast);
   setupTalentForm();
   setupVerification();
+  const getCleanRoute = () => (window.location.hash || "").replace(/^#?\/?/, "").trim();
   window.addEventListener("hashchange", () => {
-    const name = window.location.hash.slice(1);
-    if ($(`#view-${name}`)) showView(name);
+    const name = getCleanRoute();
+    if (name && $(`#view-${name}`)) showView(name);
     else showView("overview");
   });
-  const initial = window.location.hash.slice(1);
-  if ($(`#view-${initial}`)) showView(initial); else showView("overview");
+  const initial = getCleanRoute();
+  if (initial && $(`#view-${initial}`)) showView(initial); else showView("overview");
   refresh();
 })();
