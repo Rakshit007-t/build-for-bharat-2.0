@@ -258,7 +258,7 @@
   }
 
   function metric(value) {
-    return typeof value === "number" && Number.isFinite(value) ? value.toFixed(3) : "—";
+    return typeof value === "number" && Number.isFinite(value) ? value.toFixed(4) : "—";
   }
 
   function percent(value) {
@@ -288,11 +288,9 @@
     const root = $("#overview-stats");
     root.replaceChildren();
     const counts = summary?.dataset_row_counts || {};
-    const entries = Object.values(counts);
-    const total = entries.reduce((sum, value) => sum + value, 0);
     const market = state.market || summary?.job_market;
     const firstSkill = market?.top_skills?.[0];
-    const firstRole = market?.top_roles?.[0];
+    const firstRole = market?.analytics_role_frequency?.[0];
     const modelCard = key => {
       const model = state.models?.[key];
       const f1 = model?.metadata?.validation_metrics?.f1_macro;
@@ -300,9 +298,9 @@
     };
     const cards = [
       ["Source datasets", Object.keys(counts).length || null, "Organizer-provided files"],
-      ["Total source rows", entries.length ? total : null, "Sum of source dataset rows"],
+      ["Job-posting source rows", market?.job_posting_source_rows ?? null, "Analytics Jobs + DataScience Jobs source rows"],
       ["Top skill", firstSkill?.name || "—", firstSkill ? `${number(firstSkill.count)} normalized mentions` : "Aggregate unavailable"],
-      ["Top role", firstRole?.name || "—", firstRole ? `${number(firstRole.count)} role rows` : "Aggregate unavailable"],
+      ["Top role", firstRole?.name || "—", firstRole ? `${number(firstRole.count)} Analytics Jobs source role rows` : "Aggregate unavailable"],
       ["JDS model", modelCard("jds"), state.models?.jds?.status === "ready" ? "Logistic regression · macro F1" : "Artifact not ready"],
       ["SDS model", modelCard("sds"), state.models?.sds?.status === "ready" ? "Random forest · macro F1" : "Artifact not ready"]
     ];
@@ -529,12 +527,14 @@
 
     const market = state.market || summary?.job_market;
     renderRankList($("#overview-skills"), market?.top_skills);
-    renderRankList($("#market-roles"), market?.top_roles);
+    renderRankList($("#market-roles"), market?.analytics_role_frequency);
+    renderRankList($("#market-ds-roles"), market?.datascience_role_frequency);
+    renderRankList($("#market-volume-roles"), market?.datascience_reported_job_volume);
     renderRankList($("#market-skills"), market?.top_skills);
     renderRankList($("#market-locations"), market?.top_locations || market?.locations);
     renderRankList($("#market-companies"), market?.top_companies);
     if (market) {
-      setNotice($("#market-status"), "Aggregate summaries loaded", `${number(market.total_jobs)} rows across the available job datasets. Descriptive patterns only.`);
+      setNotice($("#market-status"), "Aggregate summaries loaded", `${number(market.job_posting_source_rows)} job-posting source rows. Source role frequency and reported job volume use different counting structures and are presented separately. Descriptive patterns only.`);
       renderSalaryCategories(market.salary_summary || {});
       $("#experience-summary").textContent = `Observed ${number(market.experience_summary?.observed_count)} experience values; unit: ${market.experience_summary?.unit || "not specified"}.`;
       const relationships = market.notable_relationships || {};
@@ -544,7 +544,7 @@
       const leadLocation = market.top_locations?.[0] || market.locations?.[0];
       const cards = [
         ["MOST FREQUENT SKILL", market.top_skills?.[0] ? `${market.top_skills[0].name} leads the Analytics Jobs skill vocabulary with ${number(market.top_skills[0].count)} normalized mentions.` : "Skill aggregate unavailable."],
-        ["MOST LISTED ROLE", market.top_roles?.[0] ? `${market.top_roles[0].name} appears in ${number(market.top_roles[0].count)} source role rows.` : "Role aggregate unavailable."],
+        ["MOST FREQUENT ROLE LABEL", market.analytics_role_frequency?.[0] ? `${market.analytics_role_frequency[0].name} appears in ${number(market.analytics_role_frequency[0].count)} Analytics Jobs source role rows.` : "Role aggregate unavailable."],
         ["LEADING LOCATION", leadLocation ? `${leadLocation.name} is the most frequent location component (${number(leadLocation.count)} mentions).` : "Location aggregate unavailable."],
         ["SALARY / EXPERIENCE", correlation?.pearson_r != null ? `The descriptive correlation is ${metric(correlation.pearson_r)} across ${number(correlation.paired_rows)} pairs; it does not show causation.` : "A descriptive association is available in the market detail." ]
       ];

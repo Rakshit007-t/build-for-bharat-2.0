@@ -33,8 +33,13 @@ def write_job_market_report(result: dict[str, Any], path: Path) -> None:
     lines = ["# Job Market Analysis", "", f"Generated: {summary['generated_at']}", "", "## Scope and row counts", ""]
     for name, rows in summary["dataset_row_counts"].items():
         lines.append(f"- {name}: {rows:,} job rows")
-    lines += ["", "## Top roles", ""]
-    lines += [f"- {item['name']}: {item['count']:,}" for item in summary["top_roles"]] or ["- No role column could be identified from the available schema."]
+    lines += ["", f"## Role frequency — Analytics Jobs source rows", ""]
+    lines += [f"- {item['name']}: {item['count']:,} source role rows" for item in summary["analytics_role_frequency"]] or ["- No role column could be identified from the available schema."]
+    lines += ["", "## DataScience Jobs role measures", "", "Role frequency — DataScience Jobs source rows:"]
+    lines += [f"- {item['name']}: {item['count']:,} source role rows" for item in summary["datascience_role_frequency"]]
+    lines += ["", "Reported job volume — DataScience Jobs `num_of_jobs`:"]
+    lines += [f"- {item['name']}: {item['count']:,} reported jobs" for item in summary["datascience_reported_job_volume"]]
+    lines += ["", "These sources use different counting structures and are presented separately. Source role rows are not unique vacancies."]
     lines += ["", "## Top skills", ""]
     lines += [f"- {item['name']}: {item['count']:,} mentions" for item in summary["top_skills"]] or ["- No skill-bearing columns were identified."]
     lines += ["", "## Locations", ""]
@@ -85,7 +90,7 @@ def build_approach_note(quality: dict[str, Any], job_summary: dict[str, Any] | N
         "",
         "## Executive Summary",
         "",
-        f"The two job-posting sources contain {summary.get('total_jobs', 0):,} records. The DataScience Jobs file reports {summary.get('reported_job_count_total', 0):,} combined row counts using its `num_of_jobs` field and one row per record for the other source; this is not a deduplicated vacancy total.",
+        f"The two job-posting sources contain {summary.get('job_posting_source_rows', 0):,} source rows. DataScience Jobs separately reports {summary.get('reported_job_volume_total', 0):,} as the sum of its `num_of_jobs` field; this is source-reported volume, not a deduplicated vacancy total.",
         "",
         "The most frequent parsed skill mentions are " + (", ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_skills", [])[:5]) or "not available") + ". In the five-fold stratified evaluation, the selected JDS model was " + (models.get("jds") or {}).get("model_name", "not trainable") + " and the selected SDS model was " + (models.get("sds") or {}).get("model_name", "not trainable") + ". Their internal estimates are based on 139 and 161 complete cases respectively and are not external validation.",
         "",
@@ -148,20 +153,20 @@ def build_approach_note(quality: dict[str, Any], job_summary: dict[str, Any] | N
         for feature, bounds in (models.get(key) or {}).get("feature_ranges", {}).items():
             lines.append(f"| {key.upper()} | {feature} | {bounds['min']:g} | {bounds['max']:g} |")
     lines += ["", "Feature ranges are observed sample ranges, not validated scales or recommended inputs.", "", "## 8. Job-Market Analysis", ""]
-    lines.append(f"The two job files contain {summary['total_records']:,} source rows. Across the listed `num_of_jobs` value and one-per-row counts for the other source, the arithmetic total is {summary['reported_job_count_total']:,}; it is not a deduplicated vacancy count or a market-size estimate.")
+    lines.append(f"The two job files contain {summary['job_posting_source_rows']:,} job-posting source rows. DataScience Jobs separately reports {summary['reported_job_volume_total']:,} as the sum of `num_of_jobs`; this is source-reported volume, not a deduplicated vacancy count or market-size estimate.")
     lines.append("")
-    lines.append("Top role rows: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_roles", [])[:8]) + ".")
+    lines.append("Role frequency — Analytics Jobs source rows: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("analytics_role_frequency", [])[:8]) + ".")
     lines.append("Top skill mentions: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_skills", [])[:10]) + ".")
     lines.append("Most frequent normalized location components: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_locations", [])[:8]) + ".")
-    lines.append("Top company job counts as reported in DataScience Jobs: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_companies", [])[:8]) + ".")
+    lines.append("Reported company job volume from DataScience Jobs `num_of_jobs`: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_companies", [])[:8]) + ".")
     lines += ["", "Normalized top-20 skill vocabulary:", "", "| Term | Mention frequency |", "| --- | ---: |"]
     lines += [f"| {item['name']} | {item['count']:,} |" for item in summary.get("top_skills", [])]
     lines += ["", "Mention frequencies are not unique people or unique jobs. The job files use different aggregation structures and have no row-level join key."]
     for source_name, source_result in summary.get("by_dataset", {}).items():
         if source_result.get("top_roles"):
-            lines += ["", f"Source role labels for {source_name}: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles"][:8]) + "."]
+            lines += ["", f"Role frequency — {source_name} source rows: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles"][:8]) + "."]
         if source_result.get("top_roles_by_reported_jobs"):
-            lines += [f"Reported role counts for {source_name}: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles_by_reported_jobs"][:8]) + "."]
+            lines += [f"Reported job volume — {source_name} `num_of_jobs`: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles_by_reported_jobs"][:8]) + "."]
     lines.append("")
     for name, salary in summary["salary_summary"].get("by_dataset", {}).items():
         lines.append(f"{name} salary: {salary.get('unit')}. Parsed values={salary.get('observed_count', 0):,}; median={salary.get('median')}; observed source categories=" + ", ".join(f"{item['name']} ({item['count']:,})" for item in salary.get("category_counts", [])[:8]) + ".")
@@ -182,7 +187,7 @@ def build_approach_note(quality: dict[str, Any], job_summary: dict[str, Any] | N
     lines += _model_report_section(models.get("sds"), "SDS", "encoded organizational success label; association only, not a universal personality-based hiring truth")
     lines += ["", "## 12. SDS Results", "", "The random forest's feature-importance values are impurity-based within this fitted model. They describe model reliance in this sample, not causal effects, universal trait validity, or person-level suitability.", "", "## 13. Cross-Analysis and Consolidation", "", "The job-posting files and traits files contain different units and no documented person/job join key. No record-level merge is performed. Market summaries and label models are therefore presented as complementary but independent evidence, without combining them into a score.", "", "## 14. Key Findings", ""]
     lines += [f"- {summary['top_skills'][0]['name']} is the most frequent normalized skill mention ({summary['top_skills'][0]['count']:,}) in the parsed skill text." for _ in [0] if summary.get("top_skills")]
-    lines += [f"- {summary['top_roles'][0]['name']} is the most frequent role label ({summary['top_roles'][0]['count']:,} source rows) under the standardized role-field extraction." for _ in [0] if summary.get("top_roles")]
+    lines += [f"- {summary['analytics_role_frequency'][0]['name']} is the most frequent role label ({summary['analytics_role_frequency'][0]['count']:,} Analytics Jobs source role rows)." for _ in [0] if summary.get("analytics_role_frequency")]
     lines += [f"- The parsed DataScience salary and minimum-experience fields have a within-source Pearson correlation of {summary['notable_relationships']['datascience_jobs']['pearson_r']:.3f} over {summary['notable_relationships']['datascience_jobs']['paired_rows']:,} rows." for _ in [0] if "datascience_jobs" in summary.get("notable_relationships", {})]
     for key in ("jds", "sds"):
         result = models.get(key) or {}

@@ -76,7 +76,7 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
     processed_dir.mkdir(parents=True, exist_ok=True)
     combined_skills = Counter()
     combined_skill_pairs = Counter()
-    role_counter = Counter()
+    analytics_role_frequency: list[dict[str, Any]] = []
     location_counter = Counter()
     company_counter = Counter()
 
@@ -102,9 +102,9 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
                     continue
                 row_skills.update(normalize_skill_text(value))
             combined_skill_pairs.update(combinations(sorted(row_skills), 2))
-        weights = pd.to_numeric(frame[jobs_count_col], errors="coerce").fillna(0) if jobs_count_col else pd.Series(1, index=frame.index)
-        if roles_col:
-            role_counter.update(frame[roles_col].dropna().astype(str).str.strip().value_counts().to_dict())
+        weights = pd.to_numeric(frame[jobs_count_col], errors="coerce").fillna(0) if jobs_count_col else pd.Series(0, index=frame.index)
+        if roles_col and name == "analytics_jobs":
+            analytics_role_frequency = _top_values(frame[roles_col], limit=12)
         if location_col:
             location_counter.update(_location_counts(frame[location_col]))
         if company_col:
@@ -113,20 +113,20 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
         weighted_role_counts = (
             pd.DataFrame({"name": frame[roles_col].astype("string").str.strip(), "weight": weights})
             .dropna(subset=["name"]).groupby("name")["weight"].sum()
-            if roles_col else pd.Series(dtype=float)
+            if roles_col and jobs_count_col else pd.Series(dtype=float)
         )
         weighted_company_counts = (
             pd.DataFrame({"name": frame[company_col].astype("string").str.strip(), "weight": weights})
             .dropna(subset=["name"]).groupby("name")["weight"].sum()
-            if company_col else pd.Series(dtype=float)
+            if company_col and jobs_count_col else pd.Series(dtype=float)
         )
         salary_unit = "source scale as labeled in each record; period is not inferred"
         if salary_col and frame[salary_col].dropna().astype(str).str.lower().str.endswith("l").all():
             salary_unit = "lakh units encoded by the source L suffix; salary period is not specified in the field"
         results[name] = {
             "rows": int(len(frame)),
-            "reported_job_count_total": int(weights.sum()),
-            "reported_job_count_column": jobs_count_col,
+            "reported_job_volume_total": int(weights.sum()) if jobs_count_col else None,
+            "reported_job_volume_column": jobs_count_col,
             "columns": int(original.shape[1]),
             "role_column_used": roles_col,
             "company_column_used": company_col,
@@ -170,16 +170,16 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
     exp_cols = [col for col in all_rows.columns if col.endswith("_years_numeric")]
     role_col = _column(list(all_rows.columns), ROLE_TERMS)
     location_col = _column(list(all_rows.columns), LOCATION_TERMS)
-    total_records = int(sum(len(df) for df in datasets.values()))
-    reported_jobs = int(sum(result["reported_job_count_total"] for result in results.values()))
+    job_posting_source_rows = int(sum(len(df) for df in datasets.values()))
     summary: dict[str, Any] = {
         "status": "ready",
-        "total_jobs": total_records,
-        "total_records": total_records,
-        "reported_job_count_total": reported_jobs,
-        "reported_job_count_note": "Sum of per-row num_of_jobs where supplied; one row counted for sources without that field. Not a deduplicated cross-source vacancy total.",
+        "job_posting_source_rows": job_posting_source_rows,
+        "reported_job_volume_total": int(results.get("datascience_jobs", {}).get("reported_job_volume_total") or 0),
+        "reported_job_volume_note": "DataScience Jobs num_of_jobs values are source-reported volume, not unique vacancies; kept separate from source-row counts.",
         "dataset_row_counts": {name: int(len(df)) for name, df in datasets.items()},
-        "top_roles": [{"name": name, "count": int(count)} for name, count in role_counter.most_common(12)],
+        "analytics_role_frequency": analytics_role_frequency,
+        "datascience_role_frequency": results.get("datascience_jobs", {}).get("top_roles", []),
+        "datascience_reported_job_volume": results.get("datascience_jobs", {}).get("top_roles_by_reported_jobs", []),
         "top_skills": [{"name": name, "count": int(count)} for name, count in combined_skills.most_common(20)],
         "skill_vocabulary": [{"name": name, "count": int(count)} for name, count in combined_skills.most_common()],
         "top_locations": [{"name": name, "count": int(count)} for name, count in location_counter.most_common(12)],
@@ -209,9 +209,9 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
         "by_dataset": results,
     }
 
-    _plot_bar(summary["top_roles"], "Top listed job roles", "Rows / reported job counts", figure_dir / "top_roles.png")
+    _plot_bar(summary["analytics_role_frequency"], "Role frequency — Analytics Jobs source rows", "Source role rows", figure_dir / "top_roles.png")
     _plot_bar(summary["top_skills"], "Most frequent listed skills", "Mentions", figure_dir / "top_skills.png")
-    _plot_bar(summary["top_locations"], "Top job locations", "Postings", figure_dir / "top_locations.png")
+    _plot_bar(summary["top_locations"], "Most frequent location components", "Location mentions", figure_dir / "top_locations.png")
     for name, result in results.items():
         salary_counts = result["salary_summary"].get("category_counts", [])
         if salary_counts:
@@ -219,7 +219,7 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
     if exp_cols:
         _plot_hist(all_rows[exp_cols].stack().dropna(), "Observed experience requirements", "Experience (years)", figure_dir / "experience_distribution.png")
     for name, result in results.items():
-        _plot_bar(result["top_roles"], f"Top roles — {name}", "Postings", figure_dir / f"{name}_roles.png")
+        _plot_bar(result["top_roles"], f"Role frequency — {name} source rows", "Source role rows", figure_dir / f"{name}_roles.png")
         _plot_bar(result["top_skills"], f"Top skills — {name}", "Mentions", figure_dir / f"{name}_skills.png")
 
     return {"summary": summary, "by_dataset": results, "cleaning_reports": transforms, "job_rows": all_rows}

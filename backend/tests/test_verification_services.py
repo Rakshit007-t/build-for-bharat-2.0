@@ -70,8 +70,7 @@ def test_score_bands_and_all_claim_comparison_outcomes():
 
 def test_sample_resumes_are_synthetic_and_have_intended_claims():
     overclaimed = parse_resume((ROOT / "content/samples/overclaimed_resume.txt").read_text(encoding="utf-8"))
-    assert [(item["skill"], item["claimed_level"]) for item in overclaimed["skills"]] == [
-        ("Python", "Advanced"), ("SQL", "Advanced"), ("Machine Learning", "Advanced")]
+    assert [(item["skill"], item["claimed_level"]) for item in overclaimed["skills"]] == [("Python", "Advanced")]
     assert all("SYNTHETIC DEMO" in (ROOT / "content/samples" / name).read_text(encoding="utf-8")
                for name in ["overclaimed_resume.txt", "underclaimed_resume.txt", "confirmed_resume.txt"])
 

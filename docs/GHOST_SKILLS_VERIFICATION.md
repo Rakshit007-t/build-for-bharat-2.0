@@ -33,7 +33,7 @@ Candidate metadata, extracted resume text, claims, evidence, assessment answers,
 
 ## Synthetic demo profiles
 
-Files in `content/samples/` are fictional synthetic resumes, not organizer data or real candidates. The overclaimed Python demo starts with no concrete supporting evidence and can produce an overclaim when answers are missed. The underclaimed profile combines intermediate claims with substantial project/work evidence; strong assessment answers can lift its result to Advanced. The confirmed profile is designed for intermediate claims and a plausible mixed answer path. Results are computed from claims, excerpts, and actual answers; no result is hardcoded.
+Files in `content/samples/` are fictional synthetic resumes, not organizer data or real candidates. The overclaimed Python demo includes limited project evidence while claiming Advanced. A correct medium answer followed by incorrect hard and medium answers produces a mixed assessment path and can yield an overclaim. The underclaimed profile combines intermediate claims with substantial project/work evidence; strong assessment answers can lift its result to Advanced. The confirmed profile is designed for intermediate claims and a plausible mixed answer path. Results are computed from claims, excerpts, and actual answers; no result is hardcoded.
 
 ## Limitations
 

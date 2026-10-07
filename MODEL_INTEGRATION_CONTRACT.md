@@ -73,8 +73,12 @@ Person A may provide `model/artifacts/job_market_summary.json` with this structu
 
 ```json
 {
-  "total_jobs": 0,
-  "top_roles": [],
+  "job_posting_source_rows": 0,
+  "reported_job_volume_total": 0,
+  "reported_job_volume_note": "DataScience Jobs num_of_jobs volume is reported separately from posting source rows.",
+  "analytics_role_frequency": [],
+  "datascience_role_frequency": [],
+  "datascience_reported_job_volume": [],
   "top_skills": [],
   "salary_summary": {},
   "experience_summary": {},
@@ -84,7 +88,7 @@ Person A may provide `model/artifacts/job_market_summary.json` with this structu
 }
 ```
 
-The zero and empty containers above describe field types only; they are not dataset results. `generated_from` lists the source dataset filenames, and `generated_at` is an ISO 8601 timestamp. Role, skill, location, salary, and experience summaries must reflect actual local analysis and include the units/definitions needed to interpret them.
+The zero and empty containers above describe field types only; they are not dataset results. `job_posting_source_rows` is the sum of Analytics Jobs and DataScience Jobs source rows. `analytics_role_frequency` counts Analytics Jobs source role rows; `datascience_role_frequency` counts DataScience Jobs role-label source rows; `datascience_reported_job_volume` and `reported_job_volume_total` use the DataScience Jobs `num_of_jobs` field. Keep these measures separate: the sources use different counting structures, and source rows are not unique vacancies. `generated_from` lists the source dataset filenames, and `generated_at` is an ISO 8601 timestamp. Skill, location, salary, and experience summaries must reflect actual local analysis and include the units/definitions needed to interpret them.
 
 ## Backend status behavior
 

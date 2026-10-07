@@ -67,4 +67,10 @@ def test_generated_market_summary_is_validated_and_aggregated():
     assert analysis.json()["status"] == "ready"
     assert report.json()["status"] == "ready"
     assert report.json()["dataset_row_counts"]["jds"] == 139
+    market = analysis.json()["summary"]
+    assert market["job_posting_source_rows"] == 17443
+    assert market["analytics_role_frequency"][0] == {"name": "Business Analyst", "count": 108}
+    assert market["datascience_role_frequency"][0] == {"name": "Data Scientist", "count": 188}
+    assert market["datascience_reported_job_volume"][0]["count"] > 0
+    assert "total_jobs" not in market
     assert figures.json()["figures"]

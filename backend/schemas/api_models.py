@@ -59,9 +59,13 @@ class ModelsResponse(BaseModel):
 
 
 class JobMarketSummary(BaseModel):
-    total_jobs: int = Field(ge=0)
+    job_posting_source_rows: int = Field(ge=0)
+    reported_job_volume_total: int = Field(ge=0)
+    reported_job_volume_note: str
     dataset_row_counts: dict[str, int] = Field(default_factory=dict)
-    top_roles: list[dict[str, Any]]
+    analytics_role_frequency: list[dict[str, Any]] = Field(default_factory=list)
+    datascience_role_frequency: list[dict[str, Any]] = Field(default_factory=list)
+    datascience_reported_job_volume: list[dict[str, Any]] = Field(default_factory=list)
     top_skills: list[dict[str, Any]]
     skill_vocabulary: list[dict[str, Any]] = Field(default_factory=list)
     top_locations: list[dict[str, Any]] = Field(default_factory=list)

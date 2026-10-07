@@ -1,57 +1,64 @@
 # Final Project Status
 
 Pipeline status: **complete**
-Generated from the four organizer-provided datasets; raw source files remain local and unchanged.
+Generated: 2026-10-07T11:49:10.535387+00:00
 
-## Datasets and analysis
+## Datasets
 
-- Analytics Jobs: 15,841 rows, 8 columns, 15,520 missing cells, 0 exact duplicates.
-- DataScience Jobs: 1,602 rows, 8 columns, 0 missing cells, 0 exact duplicates.
-- JDS Skill Traits: 139 rows, 7 columns, 0 missing cells, 0 exact duplicates; target codes 0=66, 1=73.
-- SDS Personality Traits: 161 rows, 7 columns, 0 missing cells, 0 exact duplicates; target codes 0=76, 1=85.
-- Job files contain 17,443 source rows. The reported count total (108,846) sums source `num_of_jobs` plus one per Analytics Jobs row; it is not deduplicated and is not a market-size estimate.
-- Most frequent normalized skill mentions include analytics (1,048), SQL (1,009), Python (938), finance (811), Java (752), business analysis (730), machine learning (724), and data analysis (721). Counts are mentions, not unique people or jobs.
-- Top role rows: Business Analyst (296), Data Scientist (252), Data Analyst (237), Data Engineer (207).
-- Top location components: Bengaluru (4,108), Mumbai (2,643), Gurgaon (2,129), Delhi NCR (1,363), Pune (1,253).
-- DataScience Jobs salary/experience association: Pearson r=0.5933, n=1,602; descriptive only.
-- Source files have differing aggregation structures and no row-level join key. Job-market statistics are not a census. Skill frequencies come from Analytics Jobs `key_skills`, since DataScience Jobs has no extracted skill field.
+- analytics_jobs: 15841 rows, 8 columns, 15520 missing cells, 0 exact duplicates.
+- datascience_jobs: 1602 rows, 8 columns, 0 missing cells, 0 exact duplicates.
+- jds: 139 rows, 7 columns, 0 missing cells, 0 exact duplicates.
+- sds: 161 rows, 7 columns, 0 missing cells, 0 exact duplicates.
 
 ## Selected models and measured validation
 
-Metrics are stratified 5-fold out-of-fold estimates on small datasets, not external validation. Numeric labels remain encoded as 0/1 because semantic target mapping is undocumented.
+- JDS: not ready; No valid artifact available.
+- SDS: not ready; No valid artifact available.
 
-- JDS: Logistic Regression, 139 rows; accuracy 0.8345, macro precision 0.8343, macro recall 0.8337, macro F1 0.8340, ROC-AUC 0.8924; confusion matrix [[54,12],[11,62]].
-- SDS: Random Forest, 161 rows; accuracy 0.9565, macro precision 0.9567, macro recall 0.9560, macro F1 0.9564, ROC-AUC 0.9949; confusion matrix [[72,4],[3,82]].
-- The SDS model is exploratory and must not be used to screen or rank people. Neither model establishes causation.
+## Job-market findings
 
-## Prototype and API
+- 17,443 job-posting source rows across both job files. DataScience Jobs separately reports 93,005 source `num_of_jobs` volume; this is not a deduplicated market estimate.
+- Top skill mentions: analytics (1,048), sql (1,009), python (938), finance (811), java (752), business analysis (730), machine learning (724), data analysis (721).
+- Role frequency — Analytics Jobs source rows: Business Analyst (108), Data Scientist (64), Data Analyst (50), Digital Marketing Manager (45), Home Base Job/ Data Entry/online Work/part Time Work/freelancer work (45), Product Manager (44), Digital Marketing Executive (36), Analyst (35).
+- Top location components: Bengaluru (4,108), Mumbai (2,643), Gurgaon (2,129), Delhi NCR (1,363), Pune (1,253), Hyderabad (1,179), Chennai (1,083), Noida (682).
+- Salary/experience association in datascience_jobs: r=0.5933, n=1602; descriptive only.
 
-The local FastAPI app serves the dashboard, dataset-based job-market summaries, model metadata, prediction endpoints, and a talent profile exploration endpoint. The talent endpoint accepts clearly labeled user-entered demo skills, reports descriptive vocabulary overlap and missing frequent skills, and provides analyst-authored heuristic role suggestions. It is not a learned role-fit model, hiring probability, or person score. Skill frequency is sourced only from Analytics Jobs `key_skills`.
+## Cleaning summary
 
-Endpoints: `GET /health`, `GET /api/readiness`, `GET /api/models`, `GET /api/analysis/job-market`, `GET /api/reports/summary`, `GET /api/figures`, `GET /api/figures/{path}`, `POST /api/models/jds/predict`, `POST /api/models/sds/predict`, and `POST /api/talent/profile`.
+All four files were read without changing `data/raw/`. Column names/text were normalized, numeric salary/experience fields were added where interpretable, skill text was tokenized, and exact duplicates were removed only in derived frames with indices recorded. Inspect `data/reports/data_quality_report.json` for per-field details.
 
-Run locally with `.venv\Scripts\activate`, then `python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000`; open `http://127.0.0.1:8000/`. Data preparation/training and report generation use the scripts in `model/src/`.
+## API endpoints
+
+`GET /health`, `GET /api/readiness`, `GET /api/models`, `GET /api/analysis/job-market`, `GET /api/reports/summary`, `GET /api/figures`, `GET /api/figures/{path}`, `POST /api/models/jds/predict`, and `POST /api/models/sds/predict`.
+
+## Run the prototype
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+python model\src\run_pipeline.py
+python model\src\generate_approach_docx.py
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+```
+
+Open `http://127.0.0.1:8000/`.
 
 ## Demo flow
 
-1. Show readiness, source row counts, and data-quality caveats.
-2. Explore role, location, skill mentions, and salary/experience descriptives.
-3. Show model comparisons and explain encoded targets and cross-validation limits.
-4. Submit clearly labeled demo values and show encoded class outputs only.
-5. Enter demo skills in Talent Intelligence; distinguish descriptive overlap from heuristic suggestions.
-6. Explain small sample sizes, missing semantic label mapping, no external validation, no causal claims, and no candidate screening use.
-
-## Deliverables and verification
-
-- Approach Note: `docs/APPROACH_NOTE.md` and `docs/APPROACH_NOTE.docx` (21-page main note plus a 7-page generated-figures appendix; 28 pages total in Word PDF export QA).
-- Demo script: `docs/DEMO_SCRIPT.md`; presentation outline: 20 slides / about 9:40; judge Q&A: `docs/JUDGE_QA.md`.
-- Dashboard includes Overview, Job Market, JDS, SDS, Talent Intelligence, Predict, and Methodology views.
-- Verification: 28 tests passed; Python compileall passed; `node --check frontend/app.js` passed; `git diff --check` passed; all 19 generated figures and application routes were smoke-tested locally.
-- All organizer data processing is local; raw/derived row-level datasets are ignored by Git. No external AI/API dependency is used.
+1. Open overview and show readiness, row counts, and actual source aggregates.
+2. Show job roles, skill mentions, salary/experience coverage and data caveats.
+3. Show cross-validated model comparisons and limitations.
+4. Enter clearly labeled demo inputs within the artifact's observed feature ranges; show the predicted encoded source class.
+5. Explain that encoded class meanings were not documented, cross-validation is not external validation, and the SDS analysis is not a hiring score.
 
 ## Limitations
 
-Small trait datasets; no external validation; undocumented semantic meaning of encoded targets; job sources are not a labor-market census; salary units/periods may be unspecified; observational relationships do not establish causation; talent suggestions are analyst-authored heuristics; SDS outputs are not suitable for hiring decisions.
+- Small trait datasets and no external validation.
+- Numeric target mappings to semantic high/low are unavailable.
+- Job sources are not a labor-market census; salary units/periods vary or are unspecified.
+- Observational associations do not establish causality.
+- SDS predictions must not be used to screen or rank candidates.
 
 ## Files to show judges
 

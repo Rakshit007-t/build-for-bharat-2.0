@@ -1,53 +1,24 @@
 {
   "status": "ready",
-  "total_jobs": 17443,
-  "total_records": 17443,
-  "reported_job_count_total": 108846,
-  "reported_job_count_note": "Sum of per-row num_of_jobs where supplied; one row counted for sources without that field. Not a deduplicated cross-source vacancy total.",
+  "job_posting_source_rows": 17443,
+  "reported_job_volume_total": 93005,
+  "reported_job_volume_note": "DataScience Jobs num_of_jobs values are source-reported volume, not unique vacancies; kept separate from source-row counts.",
   "dataset_row_counts": {
     "analytics_jobs": 15841,
     "datascience_jobs": 1602
   },
-  "top_roles": [
+  "analytics_role_frequency": [
     {
       "name": "Business Analyst",
-      "count": 296
+      "count": 108
     },
     {
       "name": "Data Scientist",
-      "count": 252
+      "count": 64
     },
     {
       "name": "Data Analyst",
-      "count": 237
-    },
-    {
-      "name": "Data Engineer",
-      "count": 207
-    },
-    {
-      "name": "Senior Business Analyst",
-      "count": 206
-    },
-    {
-      "name": "Senior Data Scientist",
-      "count": 199
-    },
-    {
-      "name": "Senior Data Analyst",
-      "count": 195
-    },
-    {
-      "name": "Senior Data Engineer",
-      "count": 184
-    },
-    {
-      "name": "Machine Learning Engineer",
-      "count": 68
-    },
-    {
-      "name": "Data Architect",
-      "count": 56
+      "count": 50
     },
     {
       "name": "Digital Marketing Manager",
@@ -56,6 +27,118 @@
     {
       "name": "Home Base Job/ Data Entry/online Work/part Time Work/freelancer work",
       "count": 45
+    },
+    {
+      "name": "Product Manager",
+      "count": 44
+    },
+    {
+      "name": "Digital Marketing Executive",
+      "count": 36
+    },
+    {
+      "name": "Analyst",
+      "count": 35
+    },
+    {
+      "name": "SEO Executive",
+      "count": 29
+    },
+    {
+      "name": "SEO Analyst",
+      "count": 26
+    },
+    {
+      "name": "Microsoft Advanced Analytics",
+      "count": 24
+    },
+    {
+      "name": "Associate",
+      "count": 24
+    }
+  ],
+  "datascience_role_frequency": [
+    {
+      "name": "Data Scientist",
+      "count": 188
+    },
+    {
+      "name": "Business Analyst",
+      "count": 188
+    },
+    {
+      "name": "Data Engineer",
+      "count": 188
+    },
+    {
+      "name": "Data Analyst",
+      "count": 187
+    },
+    {
+      "name": "Senior Business Analyst",
+      "count": 187
+    },
+    {
+      "name": "Senior Data Analyst",
+      "count": 187
+    },
+    {
+      "name": "Senior Data Scientist",
+      "count": 185
+    },
+    {
+      "name": "Senior Data Engineer",
+      "count": 183
+    },
+    {
+      "name": "Machine Learning Engineer",
+      "count": 59
+    },
+    {
+      "name": "Data Architect",
+      "count": 50
+    }
+  ],
+  "datascience_reported_job_volume": [
+    {
+      "name": "Business Analyst",
+      "count": 32843
+    },
+    {
+      "name": "Data Analyst",
+      "count": 18095
+    },
+    {
+      "name": "Senior Business Analyst",
+      "count": 14115
+    },
+    {
+      "name": "Data Scientist",
+      "count": 9051
+    },
+    {
+      "name": "Data Engineer",
+      "count": 8044
+    },
+    {
+      "name": "Senior Data Analyst",
+      "count": 3825
+    },
+    {
+      "name": "Senior Data Engineer",
+      "count": 3411
+    },
+    {
+      "name": "Senior Data Scientist",
+      "count": 2129
+    },
+    {
+      "name": "Machine Learning Engineer",
+      "count": 964
+    },
+    {
+      "name": "Data Architect",
+      "count": 528
     }
   ],
   "top_skills": [
@@ -34654,12 +34737,12 @@
     "analytics_jobs",
     "datascience_jobs"
   ],
-  "generated_at": "2026-10-07T10:16:49.230123+00:00",
+  "generated_at": "2026-10-07T11:49:12.686603+00:00",
   "by_dataset": {
     "analytics_jobs": {
       "rows": 15841,
-      "reported_job_count_total": 15841,
-      "reported_job_count_column": null,
+      "reported_job_volume_total": null,
+      "reported_job_volume_column": null,
       "columns": 8,
       "role_column_used": "job_desig",
       "company_column_used": null,
@@ -34707,56 +34790,7 @@
         }
       ],
       "top_companies": [],
-      "top_roles_by_reported_jobs": [
-        {
-          "name": "Business Analyst",
-          "count": 108
-        },
-        {
-          "name": "Data Scientist",
-          "count": 64
-        },
-        {
-          "name": "Data Analyst",
-          "count": 50
-        },
-        {
-          "name": "Home Base Job/ Data Entry/online Work/part Time Work/freelancer work",
-          "count": 45
-        },
-        {
-          "name": "Digital Marketing Manager",
-          "count": 45
-        },
-        {
-          "name": "Product Manager",
-          "count": 44
-        },
-        {
-          "name": "Digital Marketing Executive",
-          "count": 36
-        },
-        {
-          "name": "Analyst",
-          "count": 35
-        },
-        {
-          "name": "SEO Executive",
-          "count": 29
-        },
-        {
-          "name": "SEO Analyst",
-          "count": 26
-        },
-        {
-          "name": "Microsoft Advanced Analytics",
-          "count": 24
-        },
-        {
-          "name": "Associate",
-          "count": 24
-        }
-      ],
+      "top_roles_by_reported_jobs": [],
       "top_companies_by_reported_jobs": [],
       "top_locations": [
         {
@@ -34914,8 +34948,8 @@
     },
     "datascience_jobs": {
       "rows": 1602,
-      "reported_job_count_total": 93005,
-      "reported_job_count_column": "num_of_jobs",
+      "reported_job_volume_total": 93005,
+      "reported_job_volume_column": "num_of_jobs",
       "columns": 8,
       "role_column_used": "job_title",
       "company_column_used": "company_name",

@@ -35,13 +35,14 @@ def classify(claimed_level: str, verified: str) -> str:
 
 def build_result(claim: dict, test_score: float) -> dict:
     evidence = score_evidence(claim.get("evidence_details", []), claim.get("evidence_snippets", []))
-    total = final_score(evidence["score"], test_score)
+    displayed_test_score = round(test_score, 1)
+    total = final_score(evidence["score"], displayed_test_score)
     level = verified_level(total)
     status = classify(claim["claimed_level"], level)
     explanation = (
-        f"Prototype heuristic evidence {evidence['score']:.1f} × 0.4 + local assessment {test_score:.1f} × 0.6 "
+        f"Prototype heuristic evidence {evidence['score']:.1f} × 0.4 + local assessment {displayed_test_score:.1f} × 0.6 "
         f"= {total:.1f}. The score bands map to {level}; claim comparison is {status}."
     )
     return {"skill": claim["skill"], "claimed_level": claim["claimed_level"], "evidence_score": evidence["score"],
-            "test_score": round(test_score, 1), "final_score": total, "verified_level": None if status == "unverified" else level,
+            "test_score": displayed_test_score, "final_score": total, "verified_level": None if status == "unverified" else level,
             "status": status, "evidence_snippets": evidence["evidence_snippets"], "evidence_details": evidence["details"], "explanation": explanation}

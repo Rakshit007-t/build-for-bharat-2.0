@@ -17,7 +17,7 @@ def test_talent_profile_uses_aggregate_skill_vocabulary_only():
             {"name": "analytics", "count": 40}, {"name": "sql", "count": 45},
             {"name": "python", "count": 50},
         ],
-        "top_roles": [{"name": "Data Scientist", "count": 15}, {"name": "Data Analyst", "count": 20}],
+        "analytics_role_frequency": [{"name": "Data Scientist", "count": 15}, {"name": "Data Analyst", "count": 20}],
     }
     result = TalentProfileService().analyze(TalentProfileInput(skills=["python", "sql", "machine_learning"]), summary)
     assert result.analysis_type == "descriptive_overlap"

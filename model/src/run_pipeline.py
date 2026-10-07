@@ -102,11 +102,11 @@ def _write_final_status(quality: dict[str, Any], job_summary: dict[str, Any] | N
             lines.append(f"- {key.upper()}: {result.get('status', 'not ready')}; {result.get('reason', 'No valid artifact available.')}")
     lines += ["", "## Job-market findings", ""]
     if job_summary:
-        lines.append(f"- {job_summary['total_jobs']:,} source rows across both job files; `reported_job_count_total`={job_summary['reported_job_count_total']:,} using source `num_of_jobs` plus one per Analytics Jobs row, not a deduplicated market estimate.")
+        lines.append(f"- {job_summary['job_posting_source_rows']:,} job-posting source rows across both job files. DataScience Jobs separately reports {job_summary['reported_job_volume_total']:,} source `num_of_jobs` volume; this is not a deduplicated market estimate.")
         if job_summary.get("top_skills"):
             lines.append("- Top skill mentions: " + ", ".join(f"{item['name']} ({item['count']:,})" for item in job_summary["top_skills"][:8]) + ".")
-        if job_summary.get("top_roles"):
-            lines.append("- Top role rows: " + ", ".join(f"{item['name']} ({item['count']:,})" for item in job_summary["top_roles"][:8]) + ".")
+        if job_summary.get("analytics_role_frequency"):
+            lines.append("- Role frequency — Analytics Jobs source rows: " + ", ".join(f"{item['name']} ({item['count']:,})" for item in job_summary["analytics_role_frequency"][:8]) + ".")
         if job_summary.get("top_locations"):
             lines.append("- Top location components: " + ", ".join(f"{item['name']} ({item['count']:,})" for item in job_summary["top_locations"][:8]) + ".")
         for name, relationship in job_summary.get("notable_relationships", {}).items():

@@ -79,7 +79,7 @@ class TalentProfileService:
                 high_demand.append({"name": name, "count": int(item.get("count", 0))})
 
         role_matches: list[TalentRoleMatch] = []
-        for item in market_summary.get("top_roles", []):
+        for item in market_summary.get("analytics_role_frequency", []):
             role_name = str(item.get("name", ""))
             normalized_role = _normalize(role_name)
             rule_key = next((key for key in ROLE_SKILLS if key in normalized_role), None)
@@ -108,7 +108,7 @@ class TalentProfileService:
             missing_high_demand_skills=high_demand,
             top_role_categories=role_matches[:5],
             explanation="This is a descriptive overlap analysis based on supplied job-posting data; it is not a hiring probability.",
-            role_matching_note="Role ordering uses analyst-authored title-to-skill rules and source role frequencies. The job files have no row-level join key or role-by-skill cross-tab, so these are heuristic suggestions, not observed role-specific skill matches.",
+            role_matching_note="Role ordering uses analyst-authored title-to-skill rules and Analytics Jobs source-row role frequency. The job files have different counting structures, no row-level join key, and no role-by-skill cross-tab, so these are heuristic suggestions, not observed role-specific skill matches.",
             skill_frequency_note="Skill mention counts come from the Analytics Jobs key_skills field; DataScience Jobs has no extracted skill field and contributes no skill mentions to this vocabulary.",
             limitations=[
                 "The overlap percent counts selected skill categories with at least one matching normalized vocabulary term; it is not a fit score or prediction.",

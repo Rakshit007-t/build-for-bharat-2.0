@@ -10,9 +10,9 @@
 | 4 | Four datasets | Two job-posting sources; JDS skills; SDS personality traits. | 0:30 |
 | 5 | Data-quality audit | Actual row counts, missingness, duplicates, and target balance. | 0:30 |
 | 6 | Preparation | Local normalization, audit trail, conservative salary parsing, no fabricated labels. | 0:30 |
-| 7 | Job-market findings | 17,443 combined source rows; different source aggregation structures. | 0:25 |
+| 7 | Job-market findings | 17,443 job-posting source rows; different source aggregation structures. | 0:25 |
 | 8 | Skill demand | Python 938, SQL 1,009, Machine Learning 724 normalized mentions. | 0:30 |
-| 9 | Roles and locations | Business Analyst 296; Data Scientist 252; Bengaluru 4,108; Mumbai 2,643. | 0:30 |
+| 9 | Roles and locations | Analytics Jobs role frequency: Business Analyst 108 source role rows; DataScience Jobs reported Business Analyst volume: 32,843 `num_of_jobs`; Bengaluru 4,108; Mumbai 2,643. Measures use different source structures and stay separate. | 0:30 |
 | 10 | JDS modelling | 139 complete labeled rows; compare majority baseline, logistic regression, random forest. | 0:30 |
 | 11 | JDS validation | Five-fold stratified out-of-fold metrics and confusion matrix. | 0:35 |
 | 12 | JDS interpretation | Coefficient magnitude visualization; encoded 0/1 meaning not supplied. | 0:25 |

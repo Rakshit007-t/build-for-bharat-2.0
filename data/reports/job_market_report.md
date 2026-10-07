@@ -1,26 +1,54 @@
 # Job Market Analysis
 
-Generated: 2026-10-07T10:16:49.230123+00:00
+Generated: 2026-10-07T11:49:12.686603+00:00
 
 ## Scope and row counts
 
 - analytics_jobs: 15,841 job rows
 - datascience_jobs: 1,602 job rows
 
-## Top roles
+## Role frequency — Analytics Jobs source rows
 
-- Business Analyst: 296
-- Data Scientist: 252
-- Data Analyst: 237
-- Data Engineer: 207
-- Senior Business Analyst: 206
-- Senior Data Scientist: 199
-- Senior Data Analyst: 195
-- Senior Data Engineer: 184
-- Machine Learning Engineer: 68
-- Data Architect: 56
-- Digital Marketing Manager: 45
-- Home Base Job/ Data Entry/online Work/part Time Work/freelancer work: 45
+- Business Analyst: 108 source role rows
+- Data Scientist: 64 source role rows
+- Data Analyst: 50 source role rows
+- Digital Marketing Manager: 45 source role rows
+- Home Base Job/ Data Entry/online Work/part Time Work/freelancer work: 45 source role rows
+- Product Manager: 44 source role rows
+- Digital Marketing Executive: 36 source role rows
+- Analyst: 35 source role rows
+- SEO Executive: 29 source role rows
+- SEO Analyst: 26 source role rows
+- Microsoft Advanced Analytics: 24 source role rows
+- Associate: 24 source role rows
+
+## DataScience Jobs role measures
+
+Role frequency — DataScience Jobs source rows:
+- Data Scientist: 188 source role rows
+- Business Analyst: 188 source role rows
+- Data Engineer: 188 source role rows
+- Data Analyst: 187 source role rows
+- Senior Business Analyst: 187 source role rows
+- Senior Data Analyst: 187 source role rows
+- Senior Data Scientist: 185 source role rows
+- Senior Data Engineer: 183 source role rows
+- Machine Learning Engineer: 59 source role rows
+- Data Architect: 50 source role rows
+
+Reported job volume — DataScience Jobs `num_of_jobs`:
+- Business Analyst: 32,843 reported jobs
+- Data Analyst: 18,095 reported jobs
+- Senior Business Analyst: 14,115 reported jobs
+- Data Scientist: 9,051 reported jobs
+- Data Engineer: 8,044 reported jobs
+- Senior Data Analyst: 3,825 reported jobs
+- Senior Data Engineer: 3,411 reported jobs
+- Senior Data Scientist: 2,129 reported jobs
+- Machine Learning Engineer: 964 reported jobs
+- Data Architect: 528 reported jobs
+
+These sources use different counting structures and are presented separately. Source role rows are not unique vacancies.
 
 ## Top skills
 

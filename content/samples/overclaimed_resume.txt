@@ -4,10 +4,8 @@ Education: B.Sc. Statistics, 2024
 
 Technical Skills
 Python — Advanced
-SQL — Advanced
-Machine Learning — Advanced
 
-Profile
-Self-described advanced knowledge across listed skills. Seeking an opportunity to apply these interests.
+Selected Projects
+- Built a small Python project to summarize course survey data with pandas and NumPy; wrote a short script and checked its output manually.
 
-This synthetic sample intentionally lists advanced skill claims without concrete project, work, certification, or implementation evidence. It is only a deterministic pipeline demo.
+This fictional sample includes one limited example alongside an advanced claim. It is a deterministic workflow demo, not a real candidate.

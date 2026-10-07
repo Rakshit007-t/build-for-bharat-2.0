@@ -24,8 +24,7 @@ def upload_sample(client, sample="overclaimed_resume.txt"):
 def test_upload_api_extracts_claims_without_returning_raw_resume(client):
     uploaded = upload_sample(client)
     assert uploaded["name"] == "Aanya Mehta"
-    assert [(row["skill"], row["claimed_level"]) for row in uploaded["skills"]] == [
-        ("Python", "Advanced"), ("SQL", "Advanced"), ("Machine Learning", "Advanced")]
+    assert [(row["skill"], row["claimed_level"]) for row in uploaded["skills"]] == [("Python", "Advanced")]
     candidate = client.get(f"/api/verification/{uploaded['candidate_id']}").json()
     assert "resume_text" not in candidate
     assert candidate["name"] == uploaded["name"]
@@ -51,26 +50,28 @@ def test_question_answer_adaptation_and_report_api(client):
     assert client.get(f"/api/verification/{candidate_id}/next").json()["question_id"] == first["question_id"]
     bank = json.load(open("content/questions/python.json", encoding="utf-8"))
     question = next(row for row in bank if row["id"] == first["question_id"])
-    # Deliberately miss all three for the main overclaim demo path.
-    wrong = question["options"][(question["answer_index"] + 1) % 4]
-    answer = client.post(f"/api/verification/{candidate_id}/answer", json={"question_id": first["question_id"], "answer": wrong}).json()
-    assert answer["correct"] is False and answer["score"] == 0
+    # The judge path gets the medium item right, then misses a hard and medium item.
+    answer = client.post(f"/api/verification/{candidate_id}/answer", json={"question_id": first["question_id"], "answer": question["options"][question["answer_index"]]}).json()
+    assert answer["correct"] is True
     second = client.get(f"/api/verification/{candidate_id}/next").json()
-    assert second["difficulty"] == "easy" and second["index"] == 2
-    for current in [second]:
-        q = next(row for row in bank if row["id"] == current["question_id"])
-        choice = q["options"][(q["answer_index"] + 1) % 4]
-        result = client.post(f"/api/verification/{candidate_id}/answer", json={"question_id": current["question_id"], "answer": choice}).json()
+    assert second["difficulty"] == "hard" and second["index"] == 2
+    q = next(row for row in bank if row["id"] == second["question_id"])
+    choice = q["options"][(q["answer_index"] + 1) % 4]
+    result = client.post(f"/api/verification/{candidate_id}/answer", json={"question_id": second["question_id"], "answer": choice}).json()
     third = client.get(f"/api/verification/{candidate_id}/next").json()
+    assert third["difficulty"] == "medium"
     q = next(row for row in bank if row["id"] == third["question_id"])
     choice = q["options"][(q["answer_index"] + 1) % 4]
     result = client.post(f"/api/verification/{candidate_id}/answer", json={"question_id": third["question_id"], "answer": choice}).json()
-    assert result["done"] is True and result["test_score"] == 0
+    assert result["done"] is True and result["test_score"] == pytest.approx(28.6, abs=0.1)
     report = client.get(f"/api/verification/{candidate_id}/report").json()
     python = next(row for row in report["skills"] if row["skill"] == "Python")
     assert python["status"] == "overclaimed"
     assert python["verified_level"] == "Beginner"
-    assert python["final_score"] == 0
+    assert python["evidence_score"] == 30
+    assert python["final_score"] == 29.2
+    assert python["final_score"] == round(python["evidence_score"] * .4 + python["test_score"] * .6, 1)
+    assert "30.0 × 0.4 + local assessment 28.6 × 0.6 = 29.2" in python["explanation"]
     assert client.get("/api/verification/stats").json()["overclaimed"] == 1
 
 
@@ -109,6 +110,8 @@ def test_confirmed_and_underclaimed_synthetic_flows_are_score_derived(client):
     assert confirmed_python["test_score"] == 62.5
     assert confirmed_python["final_score"] == 61.5
     assert confirmed_python["status"] == "confirmed"
+    assert confirmed_python["verified_level"] == "Intermediate"
+    assert confirmed_python["final_score"] == round(confirmed_python["evidence_score"] * .4 + confirmed_python["test_score"] * .6, 1)
 
     underclaimed = upload_sample(client, "underclaimed_resume.txt")
     underclaimed_python = complete_python_test(client, underclaimed["candidate_id"], [True, True, True])
@@ -116,3 +119,5 @@ def test_confirmed_and_underclaimed_synthetic_flows_are_score_derived(client):
     assert underclaimed_python["test_score"] == 100
     assert underclaimed_python["status"] == "underclaimed"
     assert underclaimed_python["verified_level"] == "Advanced"
+    assert underclaimed_python["final_score"] == 81
+    assert underclaimed_python["final_score"] == round(underclaimed_python["evidence_score"] * .4 + underclaimed_python["test_score"] * .6, 1)
