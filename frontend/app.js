@@ -3,7 +3,7 @@
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { summary: null, models: null, figures: [] };
+  const state = { summary: null, models: null, market: null, readiness: null, figures: [], refreshInFlight: false };
   const labels = {
     big_data_skills: "Big data skills", maths_stats_skills: "Maths & statistics", coding_skills: "Coding skills",
     ai_and_ml_skills: "AI & machine learning", dashboard_and_storytelling_skills: "Dashboard & storytelling",
@@ -36,7 +36,7 @@
     $$(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === name));
     const active = $(`.nav-item[data-view="${name}"]`);
     $("#current-section").textContent = active ? active.textContent.trim() : "Overview";
-    window.location.hash = name;
+    if (window.location.hash !== `#${name}`) window.location.hash = name;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -46,6 +46,14 @@
 
   function metric(value) {
     return typeof value === "number" && Number.isFinite(value) ? value.toFixed(3) : "—";
+  }
+
+  function percent(value) {
+    return typeof value === "number" && Number.isFinite(value) ? `${Number(value.toFixed(1))}%` : "—";
+  }
+
+  function algorithmName(value) {
+    return ({ logistic_regression: "Logistic regression", random_forest: "Random forest" })[value] || value || "Model";
   }
 
   function setNotice(element, title, message, type = "info") {
@@ -69,20 +77,29 @@
     const counts = summary?.dataset_row_counts || {};
     const entries = Object.values(counts);
     const total = entries.reduce((sum, value) => sum + value, 0);
-    const jobs = summary?.job_market?.total_jobs;
-    const readyModels = Object.values(summary?.models || {}).filter(model => model.status === "ready").length;
+    const market = state.market || summary?.job_market;
+    const firstSkill = market?.top_skills?.[0];
+    const firstRole = market?.top_roles?.[0];
+    const modelCard = key => {
+      const model = state.models?.[key];
+      const f1 = model?.metadata?.validation_metrics?.f1_macro;
+      return model?.metadata ? `${model.metadata.model_name} · F1 ${metric(f1)}` : "Not ready";
+    };
     const cards = [
       ["Source datasets", Object.keys(counts).length || null, "Organizer-provided files"],
-      ["Source rows", entries.length ? total : null, "Aggregated row counts"],
-      ["Job postings", typeof jobs === "number" ? jobs : null, "Across available job datasets"],
-      ["Models ready", summary?.models ? readyModels : null, "Artifacts with valid metadata"]
+      ["Total source rows", entries.length ? total : null, "Sum of source dataset rows"],
+      ["Top skill", firstSkill?.name || "—", firstSkill ? `${number(firstSkill.count)} normalized mentions` : "Aggregate unavailable"],
+      ["Top role", firstRole?.name || "—", firstRole ? `${number(firstRole.count)} role rows` : "Aggregate unavailable"],
+      ["JDS model", modelCard("jds"), state.models?.jds?.status === "ready" ? "Logistic regression · macro F1" : "Artifact not ready"],
+      ["SDS model", modelCard("sds"), state.models?.sds?.status === "ready" ? "Random forest · macro F1" : "Artifact not ready"]
     ];
     cards.forEach(([title, value, hint]) => {
       const card = document.createElement("div");
       card.className = "stat-card";
       card.innerHTML = `<div class="stat-label"></div><div class="stat-value"></div><div class="stat-hint"></div>`;
       $(".stat-label", card).textContent = title;
-      $(".stat-value", card).textContent = value === null ? "—" : number(value);
+      $(".stat-value", card).textContent = value === null ? "—" : (typeof value === "number" ? number(value) : value);
+      if (["JDS model", "SDS model"].includes(title)) card.classList.add("stat-model");
       $(".stat-hint", card).textContent = hint;
       root.append(card);
     });
@@ -132,11 +149,14 @@
       title.textContent = model.metadata?.model_name || `${key.toUpperCase()} model`;
       const sub = document.createElement("div");
       sub.className = "model-sub";
-      sub.textContent = model.target || "Model metadata unavailable";
+      const metrics = model.metadata?.validation_metrics || {};
+      sub.textContent = model.metadata
+        ? `${algorithmName(model.metadata.algorithm)} · Macro F1 ${metric(metrics.f1_macro)} · Accuracy ${metric(metrics.accuracy)} · ROC-AUC ${metric(metrics.roc_auc)} · ${model.metadata.cv_folds || "—"}-fold CV`
+        : model.detail || "Model metadata unavailable";
       info.append(title, sub);
       const badge = document.createElement("span");
       badge.className = `badge ${model.status === "ready" ? "ready" : "missing"}`;
-      badge.textContent = model.status === "ready" ? "Ready" : model.status.replaceAll("_", " ");
+      badge.textContent = model.status === "ready" ? "Model Ready" : "Not Ready";
       row.append(info, badge);
       root.append(row);
       renderModelDetail(key, model, comparisonRoot, metricsRoot, featureRoot);
@@ -161,9 +181,10 @@
       ["accuracy", "precision_macro", "recall_macro", "f1_macro", "roc_auc"].forEach(name => {
         const card = document.createElement("div");
         card.className = "metric-card";
-        card.innerHTML = `<small></small><strong></strong><span>Stratified out-of-fold</span>`;
+        card.innerHTML = `<small></small><strong></strong><span></span>`;
         $("small", card).textContent = name.replaceAll("_", " ");
         $("strong", card).textContent = metric(metrics[name]);
+        $("span", card).textContent = name === "roc_auc" && metrics[name] == null ? "Not available" : "Stratified out-of-fold";
         metricsRoot.append(card);
       });
     }
@@ -183,6 +204,35 @@
       });
       if (!items.length) featureRoot.textContent = "Importance values were not available for this model.";
     }
+    renderConfusionMatrix($(`#${key}-confusion-data`), metadata.confusion_matrix);
+  }
+
+  function renderConfusionMatrix(root, matrix) {
+    if (!root) return;
+    root.replaceChildren();
+    const labels = matrix?.labels || [];
+    const values = matrix?.values || [];
+    if (labels.length < 2 || values.length !== labels.length) {
+      root.textContent = "Confusion counts are not available in model metadata.";
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "matrix-table";
+    const caption = document.createElement("caption");
+    caption.textContent = "Out-of-fold actual class by predicted class";
+    table.append(caption);
+    const head = document.createElement("thead");
+    const header = document.createElement("tr");
+    ["Actual \\ Predicted", ...labels].forEach(value => { const cell = document.createElement("th"); cell.textContent = value; header.append(cell); });
+    head.append(header);
+    const body = document.createElement("tbody");
+    labels.forEach((label, index) => {
+      const row = document.createElement("tr");
+      const heading = document.createElement("th"); heading.scope = "row"; heading.textContent = label; row.append(heading);
+      labels.forEach((_, column) => { const cell = document.createElement("td"); cell.textContent = number(values[index]?.[column]); row.append(cell); });
+      body.append(row);
+    });
+    table.append(head, body); root.append(table);
   }
 
   function renderComparison(root, candidates) {
@@ -208,47 +258,63 @@
     state.figures = figures || [];
     $("#figure-count").textContent = state.figures.length ? `${state.figures.length} local figure${state.figures.length === 1 ? "" : "s"}` : "No figures generated";
     const overview = $("#overview-figures");
-    const market = $("#market-figures");
-    overview.replaceChildren(); market.replaceChildren();
+    overview.replaceChildren();
     $$(".figure-slot").forEach(slot => slot.replaceChildren());
-    if (!state.figures.length) {
-      overview.innerHTML = `<div class="figure-empty">Figures will appear here after a successful local pipeline run.</div>`;
-      return;
-    }
-    state.figures.forEach(item => {
+    const makeFigure = item => {
       const figure = document.createElement("figure");
       figure.className = "figure-card";
       const image = document.createElement("img");
       image.src = item.path;
       image.alt = item.name;
       image.loading = "lazy";
-        const caption = document.createElement("figcaption");
-        caption.textContent = item.name;
-        image.addEventListener("error", () => { figure.replaceChildren(caption); caption.textContent = `${item.name} · figure unavailable`; });
+      const caption = document.createElement("figcaption");
+      caption.textContent = item.name;
+      image.addEventListener("error", () => {
+        image.remove();
+        caption.textContent = `${item.name} is unavailable; other local charts remain available.`;
+        figure.classList.add("figure-fallback");
+      }, { once: true });
       figure.append(image, caption);
-      if (item.name.toLowerCase().includes("job market") || item.path.includes("job_market")) market.append(figure.cloneNode(true));
-      if (overview.children.length < 4) overview.append(figure.cloneNode(true));
-      const name = item.name.toLowerCase();
+      return figure;
+    };
+    if (!state.figures.length) {
+      overview.innerHTML = `<div class="figure-empty">No generated figures are available. Aggregate charts and summaries remain available above.</div>`;
+      return;
+    }
+    const demandFigure = state.figures.find(item => String(item.name || "").toLowerCase() === "top skills")
+      || state.figures.find(item => String(item.name || "").toLowerCase().includes("skills"));
+    if (demandFigure) overview.append(makeFigure(demandFigure));
+    state.figures.forEach(item => {
+      const path = String(item.path || "").toLowerCase();
+      const name = String(item.name || "").toLowerCase();
       $$(".figure-slot").forEach(slot => {
-        const match = slot.dataset.figureMatch;
-        if (name.includes(match) || item.path.toLowerCase().includes(match.replaceAll(" ", "_")) || (match.startsWith("jds") && item.path.toLowerCase().includes("jds/") && item.name.toLowerCase().includes(match.replace("jds ", ""))) || (match.startsWith("sds") && item.path.toLowerCase().includes("sds/") && item.name.toLowerCase().includes(match.replace("sds ", "")))) {
-          const img = document.createElement("img"); img.src = item.path; img.alt = item.name; img.loading = "lazy"; img.addEventListener("error", () => { slot.textContent = `${item.name} figure unavailable.`; }); slot.append(img);
+        const requested = slot.dataset.figureMatch.toLowerCase();
+        const slug = requested.replaceAll(" ", "_");
+        const scopedMatch = (requested.startsWith("jds ") || requested.startsWith("sds "))
+          && path.includes(`/${requested.slice(0, 3)}/${slug.slice(4)}`);
+        if (path.includes(slug) || name.includes(slug.replaceAll("_", " ")) || scopedMatch) {
+          slot.replaceChildren(makeFigure(item));
         }
       });
+    });
+    $$(".figure-slot").forEach(slot => {
+      if (!slot.children.length) {
+        const fallback = document.createElement("p");
+        fallback.className = "figure-fallback-text";
+        fallback.textContent = `The ${slot.dataset.figureMatch.replaceAll("_", " ")} figure is unavailable; local summaries and metadata remain available.`;
+        slot.append(fallback);
+      }
     });
   }
 
   function renderDashboard(summary) {
     state.summary = summary;
     renderStats(summary);
-    const status = $("#system-status");
-    status.className = `status-pill ${summary?.status || ""}`;
-    status.innerHTML = `<i></i>${summary?.status === "ready" ? "All artifacts ready" : summary?.status === "partial" ? "Partial local results" : "Artifacts not ready"}`;
     $("#updated-at").textContent = summary?.generated_at ? new Date(summary.generated_at).toLocaleString() : "Not available";
     if (summary?.status === "ready") $("#data-notice").remove();
-    else setNotice($("#data-notice"), "Local results are incomplete", "Add all four organizer files under data/raw/ and run the pipeline. Missing results are not replaced with sample data.");
+    else setNotice($("#data-notice"), "Local results are incomplete", "Some aggregate artifacts are unavailable. Use refresh after the local pipeline has completed.", "warning");
 
-    const market = summary?.job_market;
+    const market = state.market || summary?.job_market;
     renderRankList($("#overview-skills"), market?.top_skills);
     renderRankList($("#market-roles"), market?.top_roles);
     renderRankList($("#market-skills"), market?.top_skills);
@@ -256,36 +322,81 @@
     renderRankList($("#market-companies"), market?.top_companies);
     if (market) {
       setNotice($("#market-status"), "Aggregate summaries loaded", `${number(market.total_jobs)} rows across the available job datasets. Descriptive patterns only.`);
-      const salary = market.salary_summary || {};
-      $("#salary-stats").replaceChildren();
-      const salaryRows = Object.entries(salary.by_dataset || {});
-      const salaryMetrics = salaryRows.length
-        ? salaryRows.map(([dataset, details]) => [`${dataset.replaceAll("_", " ")} median`, details.median]).concat(salaryRows.map(([dataset, details]) => [`${dataset.replaceAll("_", " ")} parsed`, details.observed_count]))
-        : [["Median", salary.median], ["Minimum", salary.min], ["Maximum", salary.max], ["Parsed rows", salary.observed_count]];
-      salaryMetrics.forEach(([name, value]) => {
-        const item = document.createElement("div");
-        const small = document.createElement("small"); small.textContent = name;
-        const strong = document.createElement("strong"); strong.textContent = value == null ? "—" : number(value);
-        item.append(small, strong); $("#salary-stats").append(item);
-      });
+      renderSalaryCategories(market.salary_summary || {});
       $("#experience-summary").textContent = `Observed ${number(market.experience_summary?.observed_count)} experience values; unit: ${market.experience_summary?.unit || "not specified"}.`;
       const relationships = market.notable_relationships || {};
       $("#market-relationships").textContent = Object.keys(relationships).length ? Object.entries(relationships).map(([name, value]) => `${name}: Pearson r ${metric(value.pearson_r)} (${number(value.paired_rows)} paired rows), descriptive association only.`).join(" ") : "No salary and experience relationship met the minimum data requirements.";
       renderNotes($("#market-limitations"), market.limitations || []);
+      const correlation = relationships.datascience_jobs || relationships.salary_vs_experience || relationships.datascience_salary_vs_experience;
+      const leadLocation = market.top_locations?.[0] || market.locations?.[0];
       const cards = [
-        ["MOST LISTED SKILL", market.top_skills?.[0] ? `${market.top_skills[0].name} appears ${number(market.top_skills[0].count)} times in parsed skill mentions.` : "No skill summary available."],
-        ["ROLE MIX", market.top_roles?.[0] ? `${market.top_roles[0].name} is the most frequent listed role in the available postings.` : "No role summary available."],
-        ["INTERPRETATION", "Posting counts describe these supplied sources; they do not establish total market demand or causality."]
+        ["MOST FREQUENT SKILL", market.top_skills?.[0] ? `${market.top_skills[0].name} leads the Analytics Jobs skill vocabulary with ${number(market.top_skills[0].count)} normalized mentions.` : "Skill aggregate unavailable."],
+        ["MOST LISTED ROLE", market.top_roles?.[0] ? `${market.top_roles[0].name} appears in ${number(market.top_roles[0].count)} source role rows.` : "Role aggregate unavailable."],
+        ["LEADING LOCATION", leadLocation ? `${leadLocation.name} is the most frequent location component (${number(leadLocation.count)} mentions).` : "Location aggregate unavailable."],
+        ["SALARY / EXPERIENCE", correlation?.pearson_r != null ? `The descriptive correlation is ${metric(correlation.pearson_r)} across ${number(correlation.paired_rows)} pairs; it does not show causation.` : "A descriptive association is available in the market detail." ]
       ];
       const root = $("#insight-cards"); root.replaceChildren();
       cards.forEach(([title, text]) => { const card = document.createElement("article"); card.className = "insight-card"; card.innerHTML = `<div class="insight-label"></div><p></p>`; $(".insight-label", card).textContent = title; $("p", card).textContent = text; root.append(card); });
     } else {
-      $("#salary-stats").textContent = "Not available";
+      $("#salary-charts").textContent = "Salary categories are unavailable until local analysis is generated.";
       $("#experience-summary").textContent = "Not available until local analysis is generated.";
       $("#market-relationships").textContent = "Not available until local analysis is generated.";
     }
     renderNotes($("#all-limitations"), summary?.important_limitations || market?.limitations || []);
   }
+
+  function renderSalaryCategories(salary) {
+    const root = $("#salary-charts");
+    if (!root) return;
+    root.replaceChildren();
+    const datasets = Object.entries(salary.by_dataset || {});
+    if (!datasets.length) { root.textContent = "No source salary categories are available."; return; }
+    datasets.forEach(([dataset, values]) => {
+      const group = document.createElement("section");
+      group.className = "category-group";
+      const heading = document.createElement("h3");
+      heading.textContent = dataset.replaceAll("_", " ");
+      group.append(heading);
+      const chart = document.createElement("div");
+      chart.className = "category-chart";
+      const categories = values.category_counts || [];
+      const max = Math.max(1, ...categories.map(row => Number(row.count) || 0));
+      categories.slice(0, 8).forEach(row => {
+        const line = document.createElement("div"); line.className = "category-row";
+        const label = document.createElement("span"); label.textContent = row.name;
+        const track = document.createElement("span"); track.className = "rank-track";
+        const fill = document.createElement("span"); fill.className = "rank-fill"; fill.style.width = `${Math.max(2, (Number(row.count) / max) * 100)}%`; track.append(fill);
+        const count = document.createElement("strong"); count.textContent = number(row.count);
+        line.append(label, track, count); chart.append(line);
+      });
+      if (!categories.length) chart.textContent = "No salary categories available.";
+      group.append(chart);
+      const source = document.createElement("p"); source.className = "source-note";
+      source.textContent = values.observed_count > 0
+        ? `Showing ${number(categories.length)} frequent values from ${number(values.observed_count)} records. ${values.unit || salary.unit || "Source units not specified"}`
+        : `Showing ${number(categories.length)} source salary bands. ${values.unit || salary.unit || "Source units not specified"}`;
+      group.append(source);
+      root.append(group);
+    });
+  }
+
+  function renderReadiness(readiness) {
+    state.readiness = readiness;
+    const root = $("#system-status");
+    const ready = readiness?.status === "ready";
+    root.className = `status-pill ${ready ? "ready" : "not-ready"}`;
+    root.innerHTML = `<i></i>${ready ? "Model Ready · Local" : "Not Ready · Local"}`;
+    root.title = readiness ? `Analysis: ${readiness.analysis?.status || "unknown"}; JDS: ${readiness.models?.jds?.status || "unknown"}; SDS: ${readiness.models?.sds?.status || "unknown"}` : "Local readiness endpoint is unavailable.";
+  }
+
+  function showToast(message, canRetry = true) {
+    const toast = $("#api-toast");
+    $("#toast-message").textContent = message;
+    $("#toast-retry").hidden = !canRetry;
+    toast.hidden = false;
+  }
+
+  function hideToast() { $("#api-toast").hidden = true; }
 
   function renderNotes(root, notes) {
     if (!root) return;
@@ -302,7 +413,7 @@
     fields.replaceChildren();
     const metadata = info?.metadata;
     status.textContent = info?.status === "ready" ? "Ready" : "Artifact unavailable";
-    submit.disabled = !metadata;
+    submit.disabled = info?.status !== "ready" || !metadata;
     if (!metadata) { fields.innerHTML = `<p class="empty-state">A valid local model artifact and metadata are required before predictions can run.</p>`; return; }
     (metadata.feature_names || []).forEach(feature => {
       const range = metadata.feature_ranges?.[feature];
@@ -313,7 +424,10 @@
       const hint = document.createElement("small"); hint.textContent = range ? `Observed data range: ${range.min} to ${range.max}` : "Range not available; enter a numeric value.";
       wrapper.append(label, input, hint); fields.append(wrapper);
     });
-    form.addEventListener("submit", event => submitPrediction(event, key, metadata));
+    if (!form.dataset.bound) {
+      form.dataset.bound = "true";
+      form.addEventListener("submit", event => submitPrediction(event, key, state.models?.[key]?.metadata));
+    }
   }
 
   async function submitPrediction(event, key, metadata) {
@@ -321,10 +435,11 @@
     const form = event.currentTarget;
     const result = $(`#${key}-result`);
     const button = $(`#${key}-submit`);
+    if (form.dataset.busy === "true") return;
     const payload = Object.fromEntries(new FormData(form).entries());
     Object.keys(payload).forEach(name => { payload[name] = Number(payload[name]); });
     if (Object.values(payload).some(value => !Number.isFinite(value))) { result.textContent = "Enter finite numeric values for every feature."; result.className = "prediction-result error-text"; return; }
-    button.disabled = true; button.textContent = "Running locally…"; result.textContent = "";
+    form.dataset.busy = "true"; button.disabled = true; button.textContent = "Running locally…"; result.textContent = "";
     try {
       const response = await fetch(`/api/models/${key}/predict`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
       const body = await response.json();
@@ -334,15 +449,15 @@
         result.textContent = body.detail || `Prediction unavailable: ${body.status}.`;
         result.classList.add("error-text");
       } else {
-        const label = document.createElement("div"); label.className = "prediction-label"; label.textContent = key === "sds" ? `Encoded organizational-success class: ${body.prediction}` : `Encoded class prediction: ${body.prediction}`;
-        const note = document.createElement("div"); note.className = "prediction-meta"; note.textContent = `${metadata.model_name} · ${metadata.algorithm || "validated local model"}. Source target labels are preserved as encoded; demo input only, not a guarantee or decision recommendation.`;
+        const label = document.createElement("div"); label.className = "prediction-label"; label.textContent = `Predicted encoded class: ${body.prediction}`;
+        const note = document.createElement("div"); note.className = "prediction-meta"; note.textContent = `${metadata.model_name} · ${metadata.algorithm || "local model"}. Target labels are preserved as supplied by the organizer; entered values are illustrative inputs, not observed people or outcomes.`;
         result.append(label, note);
       }
     } catch (error) {
       result.textContent = `Could not complete local prediction: ${error.message}`;
       result.className = "prediction-result error-text";
     } finally {
-      button.disabled = false; button.textContent = "Run local prediction";
+      form.dataset.busy = "false"; button.disabled = !metadata || state.models?.[key]?.status !== "ready"; button.textContent = "Run local prediction";
     }
   }
 
@@ -369,13 +484,14 @@
   function renderTalentProfile(body) {
     const root = $("#talent-results"); root.replaceChildren();
     const heading = document.createElement("h2"); heading.textContent = body.title; root.append(heading);
-    const score = document.createElement("p"); score.className = "talent-overlap"; score.textContent = `${body.overlap_percent}% descriptive vocabulary overlap`;
+    const label = document.createElement("p"); label.className = "overlap-label"; label.textContent = "Vocabulary coverage in supplied job-posting data"; root.append(label);
+    const score = document.createElement("p"); score.className = "talent-overlap"; score.textContent = percent(body.overlap_percent);
     const explanation = document.createElement("p"); explanation.textContent = body.explanation; root.append(score, explanation);
     const sourceNote = document.createElement("p"); sourceNote.className = "summary-copy"; sourceNote.textContent = body.skill_frequency_note; root.append(sourceNote);
     addTalentList(root, "Profile skills found in the job-market vocabulary", body.matched_skills, item => `${item.label}: ${number(item.frequency)} normalized mentions${item.supporting_terms.length ? ` (${item.supporting_terms.join(", ")})` : ""}`);
     addTalentList(root, "Selected skills without matching vocabulary terms", body.unmatched_profile_skills, item => item.label);
     addTalentList(root, "Other high-demand skills to consider", body.missing_high_demand_skills, item => `${item.name}: ${number(item.count)} mentions`);
-    addTalentList(root, "Top role-category suggestions", body.top_role_categories, item => `${item.role} — ${item.overlap_percent}% heuristic rule overlap; ${number(item.role_frequency)} role rows; rule skills: ${item.role_skill_rule.join(", ")}`);
+    addTalentList(root, "Top role-category suggestions", body.top_role_categories, item => `${item.role} — ${percent(item.overlap_percent)} heuristic rule overlap; ${number(item.role_frequency)} role rows; rule skills: ${item.role_skill_rule.join(", ")}`);
     const note = document.createElement("p"); note.className = "micro-warning"; note.textContent = body.role_matching_note; root.append(note);
     body.limitations.forEach(text => { const p = document.createElement("p"); p.className = "micro-warning"; p.textContent = text; root.append(p); });
   }
@@ -385,7 +501,9 @@
     const selected = [...$("#talent-form").querySelectorAll("input[name=skills]:checked")].map(input => input.value);
     const error = $("#talent-error"); error.textContent = "";
     if (!selected.length) { error.textContent = "Select at least one skill to continue."; return; }
-    const button = $("#talent-submit"); button.disabled = true; button.textContent = "Analyzing local aggregates…";
+    const button = $("#talent-submit");
+    if (button.dataset.busy === "true") return;
+    button.dataset.busy = "true"; button.disabled = true; button.textContent = "Analyzing local aggregates…";
     try {
       const response = await fetch("/api/talent/profile", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ skills: selected }) });
       const body = await response.json();
@@ -396,33 +514,61 @@
     } catch (caught) {
       error.textContent = `Could not analyze this profile: ${caught.message}`;
       $("#talent-results").replaceChildren();
-    } finally { button.disabled = false; button.textContent = "Analyze descriptive overlap"; }
+    } finally { button.dataset.busy = "false"; button.disabled = false; button.textContent = "Analyze descriptive overlap"; }
   }
 
   async function refresh() {
-    const [summaryResult, modelsResult, figuresResult] = await Promise.allSettled([
-      getJson("/api/reports/summary"), getJson("/api/models"), getJson("/api/figures")
+    if (state.refreshInFlight) return;
+    state.refreshInFlight = true;
+    const refreshButton = $("#refresh-button");
+    refreshButton.disabled = true; refreshButton.classList.add("is-loading");
+    $("#system-status").className = "status-pill loading";
+    $("#system-status").innerHTML = `<i></i>Checking local readiness`;
+    const [healthResult, readinessResult, summaryResult, marketResult, modelsResult, figuresResult] = await Promise.allSettled([
+      getJson("/health"), getJson("/api/readiness"), getJson("/api/reports/summary"),
+      getJson("/api/analysis/job-market"), getJson("/api/models"), getJson("/api/figures")
     ]);
-    if (summaryResult.status === "fulfilled") renderDashboard(summaryResult.value);
-    else setNotice($("#data-notice"), "API is unavailable", "Start the local FastAPI server, then refresh this view.", "warning");
-    if (modelsResult.status === "fulfilled") {
-      state.models = modelsResult.value;
+    if (readinessResult.status === "fulfilled") renderReadiness(readinessResult.value);
+    else renderReadiness(null);
+    if (summaryResult.status === "fulfilled") state.summary = summaryResult.value;
+    if (marketResult.status === "fulfilled" && marketResult.value.status === "ready") state.market = marketResult.value.summary;
+    else state.market = state.summary?.job_market || null;
+    const talentSubmit = $("#talent-submit");
+    const talentReady = Boolean(state.market && readinessResult.status === "fulfilled" && readinessResult.value.analysis?.status === "ready");
+    talentSubmit.disabled = !talentReady;
+    talentSubmit.textContent = talentReady ? "Analyze descriptive overlap" : "Local analysis unavailable";
+    if (modelsResult.status === "fulfilled") state.models = modelsResult.value;
+    if (summaryResult.status === "fulfilled") renderDashboard(state.summary);
+    else setNotice($("#data-notice"), "Local API unavailable", "Start the FastAPI app on this machine, then retry. No remote service is used.", "warning");
+    renderStats(state.summary);
+    if (state.models) {
       renderModels(state.models, null, null, null);
       renderModelDetail("jds", state.models.jds, $("#jds-comparison"), $("#jds-metrics"), $("#jds-features"));
       renderModelDetail("sds", state.models.sds, $("#sds-comparison"), $("#sds-metrics"), $("#sds-features"));
     }
     if (figuresResult.status === "fulfilled") renderFigures(figuresResult.value.figures);
+    else renderFigures([]);
+    const failures = [healthResult, readinessResult, summaryResult, marketResult, modelsResult, figuresResult]
+      .map((result, index) => result.status === "rejected" ? ["health", "readiness", "summary", "job-market", "models", "figures"][index] : null)
+      .filter(Boolean);
+    if (failures.length) showToast(`Some local data could not be loaded: ${failures.join(", ")}.`);
+    else hideToast();
+    state.refreshInFlight = false;
+    refreshButton.disabled = false; refreshButton.classList.remove("is-loading");
   }
 
   $$(".nav-item").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
   $$('[data-go]').forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
   $("#refresh-button").addEventListener("click", refresh);
+  $("#toast-retry").addEventListener("click", refresh);
+  $("#toast-dismiss").addEventListener("click", hideToast);
   setupTalentForm();
   window.addEventListener("hashchange", () => {
     const name = window.location.hash.slice(1);
     if ($(`#view-${name}`)) showView(name);
+    else showView("overview");
   });
   const initial = window.location.hash.slice(1);
-  if ($(`#view-${initial}`)) showView(initial);
+  if ($(`#view-${initial}`)) showView(initial); else showView("overview");
   refresh();
 })();
