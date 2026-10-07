@@ -1,101 +1,50 @@
-# 👻 Ghost Skills
+# Ghost Skills — Build for Bharat 2.0
 
-> **AI Skill Verification Layer for Hiring**  
-> Verifying claimed candidate abilities through resume evidence, optional GitHub analysis, and adaptive skill tests.
+> A local, dataset-driven analytics prototype using the four organizer-provided SAS datasets.
 
----
+## Product direction
 
-## 💡 Overview
+The prototype focuses on three dataset-backed analyses:
 
-Resumes are full of inflated claims and hidden gems. **Ghost Skills** bridges the gap between what candidates claim and what they can actually do:
-1. **Resume Ingestion**: Candidate uploads a PDF or text resume.
-2. **AI Skill Extraction**: Gemini extracts claimed technical competencies and claimed proficiency levels (`Beginner`, `Intermediate`, `Advanced`).
-3. **Evidence Scoring (0–100)**: Resume text snippets and optional GitHub repositories are evaluated for tangible proof.
-4. **Adaptive Diagnostic Test (0–100)**: 5 calibrated questions per skill adapt to the candidate's responses.
-5. **Final Composite Verification**:
-   $$\text{Final Score} = 0.4 \times \text{Evidence Score} + 0.6 \times \text{Test Score}$$
-6. **Classification**:
-   - **Confirmed**: Verified level matches claimed level.
-   - **Underclaimed**: Candidate demonstrated higher mastery than claimed (hidden talent).
-   - **Overclaimed**: Verification reveals a gap relative to claimed ability.
+- Job-market intelligence using the Analytics Jobs and DataScience Jobs datasets.
+- Technical-skill outcome analysis and prediction using JDS Skill Traits, where the available data supports a defensible target and evaluation.
+- Secondary personality/success analysis using SDS Personality Traits.
 
-**MVP Target Skills**: `Python`, `SQL`, `Machine Learning`.
+Analysis and inference stay local during the hackathon. Descriptive findings are distinct from model predictions. The datasets do not establish causation; the project will not invent ground truth or metrics. Any user-entered or demo values must be labeled clearly. See [TEAM_ARCHITECTURE.md](TEAM_ARCHITECTURE.md) for ownership, integration, scope, and milestones.
 
----
+## Team ownership
 
-## 👥 Team Ownership & Architecture
+| Team member | Ownership | Focus |
+| --- | --- | --- |
+| **Person A** | `model/` | Local data preparation, EDA, analysis/modeling/evaluation, job-market analysis, saved artifacts |
+| **Person B** | `backend/` | FastAPI API layer and integration of Person A's local outputs |
+| **Person C** | `frontend/`, presentation, Approach Note | Dashboard, presentation, and documentation based on actual results |
 
-| Team Member | Scope | Focus Areas |
-| :--- | :--- | :--- |
-| **Person A** | `backend/` | FastAPI routes, Gemini prompt engineering, SQLite models, scoring engine |
-| **Person B** | `frontend/`, `content/` | Static Tailwind UI, question banks, sample resumes, test runner UI |
+`PLAN.md` and `API_CONTRACT.md` currently describe an earlier resume-verification scaffold and should not be treated as the current product requirements. Agree updated integration contracts before implementation.
 
-- See [API_CONTRACT.md](API_CONTRACT.md) for the frozen endpoint specifications and example payloads.
-- See [PLAN.md](PLAN.md) for the 21-hour hackathon execution roadmap and database schema.
+## Local development
 
----
+The repository is currently an initial scaffold. Install the Python dependencies in `requirements.txt` in a local environment, then run the API with:
 
-## 🛠️ Tech Stack
-
-- **Backend**: Python 3.11, [FastAPI](https://fastapi.tiangolo.com/), [uvicorn](https://www.uvicorn.org/), [SQLite](https://www.sqlite.org/), [pypdf](https://pypdf.readthedocs.io/), Google Gemini (`google-genai`)
-- **Frontend**: Single static HTML + Tailwind CSS (CDN) + Vanilla JavaScript (Zero build step, zero React)
-- **Testing**: `pytest`
-
----
-
-## 🚀 Quickstart
-
-### 1. Environment Setup
 ```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment (Windows PowerShell)
-.\venv\Scripts\Activate.ps1
-# Or on macOS/Linux:
-# source venv/bin/activate
-
-# Install dependencies
+python -m venv .venv
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 2. Configure API Keys
-Copy `.env.example` to `.env` and configure your Gemini API key:
-```bash
-cp .env.example .env
-```
-Edit `.env`:
-```ini
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-### 3. Run Development Server
-```bash
 uvicorn backend.main:app --reload --port 8000
 ```
-- Open [http://localhost:8000](http://localhost:8000) for the Ghost Skills application.
-- API documentation (Swagger) is available at [http://localhost:8000/docs](http://localhost:8000/docs).
-- Health check: [http://localhost:8000/health](http://localhost:8000/health).
 
----
+The health endpoint is at `http://localhost:8000/health`; the static frontend is served at `http://localhost:8000/`.
 
-## 📂 Repository Layout
+## Repository layout
 
-```
+```text
 ghost-skills/
-├── backend/
-│   ├── __init__.py
-│   └── main.py          # FastAPI application & route mount
-├── frontend/
-│   ├── index.html       # Single-page UI with Tailwind CDN
-│   └── app.js           # Vanilla JS application
-├── content/
-│   ├── questions/       # Curated question banks (Python, SQL, ML)
-│   └── samples/         # Demo resumes & test payloads
-├── API_CONTRACT.md      # Exact REST API request/response specifications
-├── PLAN.md              # 21-hour execution timeline & SQLite schema
-├── requirements.txt     # Python dependencies
-├── .env.example         # Template environment variables
-├── .gitignore           # Git ignore rules
-└── README.md            # Project overview & instructions
+├── backend/             # Person B: local FastAPI API and integration
+├── frontend/            # Person C: dashboard
+├── model/               # Person A: local analysis, training, and artifacts (to be added)
+├── content/             # Existing empty scaffold directories
+├── TEAM_ARCHITECTURE.md # Current sprint ownership, integration, and milestones
+├── PLAN.md              # Earlier product plan; superseded for this sprint
+└── API_CONTRACT.md      # Earlier API contract; update with team agreement
 ```
