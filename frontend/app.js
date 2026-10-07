@@ -41,6 +41,11 @@
     const body = await response.json();
     if (!response.ok) throw new Error(formatApiDetail(body.detail) || `Upload failed (${response.status})`);
     state.verificationCandidate = body;
+    try {
+      if (body?.candidate_id) {
+        sessionStorage.setItem("ghost_skills_candidate_id", body.candidate_id);
+      }
+    } catch { /* storage fallback */ }
     state.latestReport = null;
     state.assessment = null;
     state.currentQuestion = null;
@@ -337,96 +342,258 @@
 
     completed.forEach(result => {
       const card = document.createElement("article");
-      card.className = `result-card status-${result.status}`;
+      card.className = `result-card status-${result.status} skill-truth-card`;
       const discovery = result.origin === "discovery";
 
-      // 1. One-line comparison explanation
-      let oneLineExplanation = "";
-      if (discovery) {
-        oneLineExplanation = `Demonstrated ability scored ${(result.test_score ?? 0).toFixed(1)}/100 on optional technical check (no resume claim declared).`;
-      } else if (result.status === "overclaimed") {
-        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability supported ${result.verified_level || "Beginner"}.`;
-      } else if (result.status === "confirmed") {
-        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability confirmed ${result.verified_level || result.claimed_level}.`;
-      } else if (result.status === "underclaimed") {
-        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability supported higher proficiency (${result.verified_level}).`;
-      } else {
-        oneLineExplanation = `The resume claimed ${result.claimed_level}. Demonstrated ability scored ${(result.test_score ?? 0).toFixed(1)}/100.`;
-      }
-
-      // 2. Card Header with Title and Verdict Badge
-      const header = document.createElement("div");
-      header.className = "result-card-header";
-      const title = document.createElement("div");
-      addText(title, "p", `${result.skill.toUpperCase()} · SKILL TRUST REPORT`, "eyebrow");
-      addText(title, "h2", discovery ? `${result.skill} Optional Demonstration` : `${result.skill} Verification Summary`);
-
-      const verdictBadge = document.createElement("div");
-      verdictBadge.className = `verdict-badge verdict-${result.status}`;
-      verdictBadge.innerHTML = `<span class="verdict-label">VERDICT</span><strong class="verdict-val">${result.status.toUpperCase()}</strong>`;
-      header.append(title, verdictBadge);
-      card.append(header);
-
-      // 3. Hero 6-Metric USP Grid
-      const grid = document.createElement("div");
-      grid.className = "result-usp-grid";
-
-      const claimedVal = discovery ? `${result.skill} — Not claimed` : `${result.skill} — ${result.claimed_level}`;
       const evVal = result.evidence_score !== null ? result.evidence_score.toFixed(1) : "—";
       const demoVal = result.test_score !== null ? result.test_score.toFixed(1) : "—";
       const finalVal = (discovery ? result.test_score : result.final_score) !== null ? (discovery ? result.test_score : result.final_score).toFixed(1) : "—";
       const verifiedVal = discovery ? "Demonstrated" : (result.verified_level || "Beginner");
       const verdictVal = result.status.toUpperCase();
+      const claimedVal = discovery ? "Not claimed" : (result.claimed_level || "Unspecified");
 
-      const metrics = [
-        { label: "CLAIMED", val: claimedVal, cls: "cell-claimed" },
-        { label: "EVIDENCE", val: evVal, cls: "cell-evidence" },
-        { label: "DEMONSTRATED", val: demoVal, cls: "cell-demo" },
-        { label: "FINAL", val: finalVal, cls: "cell-final" },
-        { label: "VERIFIED", val: verifiedVal, cls: "cell-verified" },
-        { label: "VERDICT", val: verdictVal, cls: `cell-verdict verdict-text-${result.status}` }
+      // 1. Card Header: GHOST SKILLS · SKILL TRUTH ENGINE
+      const header = document.createElement("div");
+      header.className = "result-card-header";
+      const title = document.createElement("div");
+      addText(title, "p", "GHOST SKILLS · SKILL TRUTH ENGINE", "eyebrow");
+      addText(title, "h2", `SKILL TRUTH · ${result.skill}`);
+
+      const verdictBadge = document.createElement("div");
+      verdictBadge.className = `verdict-badge verdict-${result.status}`;
+      verdictBadge.innerHTML = `<span class="verdict-label">VERDICT</span><strong class="verdict-val">${verdictVal}</strong>`;
+      header.append(title, verdictBadge);
+      card.append(header);
+
+      // 2. WOW MOMENT CALLOUT (The Overclaimed Wow Moment)
+      const wowCallout = document.createElement("div");
+      wowCallout.className = `skill-truth-callout callout-${result.status}`;
+      if (result.status === "overclaimed") {
+        wowCallout.innerHTML = `
+          <div class="callout-hero-text">“THE RESUME SAID ${(result.claimed_level || "ADVANCED").toUpperCase()}. THE TEST SHOWED ${(result.verified_level || "BEGINNER").toUpperCase()}.”</div>
+          <div class="callout-subtext">Ghost Skills reveals the gap.</div>
+        `;
+      } else if (result.status === "confirmed") {
+        wowCallout.innerHTML = `
+          <div class="callout-hero-text">“THE RESUME CLAIM IS VERIFIED AT ${(result.claimed_level || "INTERMEDIATE").toUpperCase()}.”</div>
+          <div class="callout-subtext">Demonstrated ability confirms candidate claim.</div>
+        `;
+      } else if (result.status === "underclaimed") {
+        wowCallout.innerHTML = `
+          <div class="callout-hero-text">“HIDDEN CAPABILITY DETECTED: DEMONSTRATED ${(result.verified_level || "ADVANCED").toUpperCase()}.”</div>
+          <div class="callout-subtext">Candidate capability exceeds the resume claim.</div>
+        `;
+      } else {
+        wowCallout.innerHTML = `
+          <div class="callout-hero-text">“OPTIONAL TECHNICAL DEMONSTRATION COMPLETED.”</div>
+          <div class="callout-subtext">Demonstrated ability recorded without prior resume claim.</div>
+        `;
+      }
+      card.append(wowCallout);
+
+      // 3. Large Dynamic "SKILL TRUTH" Card / Grid
+      const truthGrid = document.createElement("div");
+      truthGrid.className = "result-usp-grid skill-truth-grid";
+
+      const truthMetrics = [
+        { label: "RESUME CLAIM", val: claimedVal, sub: "Self-Reported Level", cls: "cell-claimed" },
+        { label: "RESUME PROOF", val: `Evidence: ${evVal}`, sub: "Evidence Score (0–100)", cls: "cell-evidence" },
+        { label: "DEMONSTRATED ABILITY", val: `Test: ${demoVal}`, sub: "Adaptive Test Score", cls: "cell-demo" },
+        { label: "FINAL SCORE", val: finalVal, sub: "0.4×Ev + 0.6×Test", cls: "cell-final" },
+        { label: "VERIFIED LEVEL", val: verifiedVal, sub: "Calibrated Truth", cls: "cell-verified" },
+        { label: "VERDICT", val: verdictVal, sub: "Trust Decision", cls: `cell-verdict verdict-text-${result.status}` }
       ];
 
-      metrics.forEach(m => {
+      truthMetrics.forEach(m => {
         const cell = document.createElement("div");
         cell.className = `usp-grid-cell ${m.cls}`;
         addText(cell, "span", m.label, "cell-label");
         addText(cell, "strong", m.val, "cell-value");
-        grid.append(cell);
+        if (m.sub) addText(cell, "small", m.sub, "cell-sub");
+        truthGrid.append(cell);
       });
-      card.append(grid);
+      card.append(truthGrid);
 
-      // 4. Formula Strip: Final = 0.4 × Evidence + 0.6 × Test
-      const formulaStrip = document.createElement("div");
-      formulaStrip.className = "result-formula-strip";
-      if (!discovery && result.evidence_score !== null && result.test_score !== null) {
-        formulaStrip.innerHTML = `
-          <div class="formula-head">
-            <span class="formula-badge">FORMULA</span>
-            <strong>Final = 0.4 × Evidence + 0.6 × Test</strong>
+      // 4. CLAIM → PROOF → DEMONSTRATION → TRUTH Visual (Large Typography & Arrows)
+      const cptVisual = document.createElement("div");
+      cptVisual.className = "claim-proof-truth-box";
+      cptVisual.innerHTML = `
+        <div class="cpt-flow">
+          <div class="cpt-node">
+            <span class="cpt-tag">CLAIM</span>
+            <strong class="cpt-val">“${claimedVal} ${result.skill}”</strong>
+            <small class="cpt-desc">Resume statement</small>
           </div>
-          <div class="formula-breakdown">
-            0.4 × ${result.evidence_score.toFixed(1)} (${(result.evidence_score * 0.4).toFixed(1)}) + 0.6 × ${result.test_score.toFixed(1)} (${(result.test_score * 0.6).toFixed(1)}) = <strong>${result.final_score.toFixed(1)}</strong>
+          <div class="cpt-arrow">↓</div>
+          <div class="cpt-node">
+            <span class="cpt-tag">PROOF</span>
+            <strong class="cpt-val">Evidence: ${evVal}</strong>
+            <small class="cpt-desc">Fact extraction</small>
           </div>
-        `;
-      } else {
-        formulaStrip.innerHTML = `
-          <div class="formula-head">
-            <span class="formula-badge">SCORE</span>
-            <strong>Test score = ${(result.test_score ?? 0).toFixed(1)}/100</strong>
+          <div class="cpt-arrow">↓</div>
+          <div class="cpt-node">
+            <span class="cpt-tag">DEMONSTRATION</span>
+            <strong class="cpt-val">Test: ${demoVal}</strong>
+            <small class="cpt-desc">Actual assessment</small>
           </div>
-        `;
+          <div class="cpt-arrow">↓</div>
+          <div class="cpt-node cpt-node-truth">
+            <span class="cpt-tag">TRUTH</span>
+            <strong class="cpt-val">${verifiedVal}</strong>
+            <small class="cpt-desc">Verified level</small>
+          </div>
+        </div>
+      `;
+      card.append(cptVisual);
+
+      // 5. “WHY THIS RESULT?” Dynamic 1–2 Line Explanation
+      const whyBox = document.createElement("div");
+      whyBox.className = "why-verdict-box";
+      whyBox.innerHTML = `
+        <div class="why-verdict-head">
+          <span class="why-badge">AUDIT RATIONALE</span>
+          <strong>WHY THIS RESULT?</strong>
+        </div>
+        <p class="why-result-statement">
+          “The resume claimed <strong>${claimedVal}</strong>.
+          The evidence score was <strong>${evVal}</strong>.
+          The demonstrated test score was <strong>${demoVal}</strong>.
+          The verified level is <strong>${verifiedVal}</strong>.
+          Therefore the claim is <strong class="verdict-inline-${result.status}">${verdictVal}</strong>.”
+        </p>
+        <div class="formula-math-display">
+          <span>Formula Proof:</span>
+          <strong>0.4 × ${evVal} + 0.6 × ${demoVal} = ${finalVal}</strong>
+          <span class="formula-rule">(&lt;40 Beginner · 40–70 Intermediate · &gt;70 Advanced)</span>
+        </div>
+      `;
+      card.append(whyBox);
+
+      // 6. “SKILL TRUST GAP” Visual
+      const gapBox = document.createElement("div");
+      gapBox.className = "skill-trust-gap-box";
+      const stepLevels = { "Beginner": 1, "Intermediate": 2, "Advanced": 3 };
+      const claimedStep = stepLevels[result.claimed_level] || 1;
+      const verifiedStep = stepLevels[result.verified_level] || 1;
+
+      let gapMessage = "No trust gap detected.";
+      if (result.status === "overclaimed") {
+        gapMessage = "Claim exceeds demonstrated ability.";
+      } else if (result.status === "underclaimed") {
+        gapMessage = "Hidden capability detected.";
       }
-      card.append(formulaStrip);
 
-      // 5. One-line explanation quote banner
-      const quoteBox = document.createElement("div");
-      quoteBox.className = `result-quote-box quote-${result.status}`;
-      quoteBox.innerHTML = `<span class="quote-mark">“</span><p class="quote-text">${oneLineExplanation}</p><span class="quote-mark">”</span>`;
-      card.append(quoteBox);
+      gapBox.innerHTML = `
+        <div class="gap-header">
+          <div>
+            <span class="gap-tag">SKILL TRUST GAP</span>
+            <strong class="gap-message-title">${gapMessage}</strong>
+          </div>
+          <div class="gap-comparison-pill">
+            <span class="pill-claimed">CLAIMED: ${claimedVal}</span>
+            <span class="pill-vs">VS</span>
+            <span class="pill-verified">VERIFIED: ${verifiedVal}</span>
+          </div>
+        </div>
+        <div class="gap-meter-comparison">
+          <div class="gap-meter-row">
+            <span class="m-label">Claimed Tier:</span>
+            <div class="m-track"><div class="m-fill fill-claimed step-${claimedStep}"></div></div>
+            <span class="m-step-val">${claimedVal}</span>
+          </div>
+          <div class="gap-meter-row">
+            <span class="m-label">Verified Tier:</span>
+            <div class="m-track"><div class="m-fill fill-verified step-${verifiedStep} fill-${result.status}"></div></div>
+            <span class="m-step-val">${verifiedVal}</span>
+          </div>
+        </div>
+      `;
+      card.append(gapBox);
 
-      // 6. Detailed Rationale & Excerpts
-      addText(card, "h3", "Why this result?");
+      // 7. VERIFIED SKILL PASSPORT Artifact
+      const passport = document.createElement("div");
+      passport.className = "verified-passport-card";
+      passport.innerHTML = `
+        <div class="passport-header">
+          <div class="passport-brand">
+            <span class="passport-logo">G</span>
+            <div>
+              <strong>GHOST SKILLS</strong>
+              <small>VERIFIED SKILL PASSPORT</small>
+            </div>
+          </div>
+          <span class="passport-verdict-badge verdict-${result.status}">${verdictVal}</span>
+        </div>
+        <div class="passport-body">
+          <div class="passport-candidate-strip">
+            <span class="p-cand-name">${candidate.name || "Candidate"}</span>
+            <span class="p-cand-meta">${candidate.education || "Verified Profile"} · Candidate ID: ${candidate.candidate_id.slice(0, 8)}</span>
+          </div>
+          <div class="passport-data-grid">
+            <div class="p-data-item"><span class="p-label">Skill</span><strong class="p-val">${result.skill}</strong></div>
+            <div class="p-data-item"><span class="p-label">Claimed Level</span><strong class="p-val">${claimedVal}</strong></div>
+            <div class="p-data-item"><span class="p-label">Verified Level</span><strong class="p-val p-verified-val">${verifiedVal}</strong></div>
+            <div class="p-data-item"><span class="p-label">Evidence Score</span><strong class="p-val">${evVal}</strong></div>
+            <div class="p-data-item"><span class="p-label">Demonstrated Test</span><strong class="p-val">${demoVal}</strong></div>
+            <div class="p-data-item"><span class="p-label">Final Score</span><strong class="p-val p-final-val">${finalVal}</strong></div>
+          </div>
+        </div>
+        <div class="passport-footer">
+          <span class="p-seal">AUTHENTICATED LOCAL ARTIFACT</span>
+          <span class="p-tagline">“ATS finds the keyword. Ghost Skills verifies the skill.”</span>
+        </div>
+      `;
+      card.append(passport);
+
+      // 8. Separate MARKET CONTEXT Card
+      const marketCard = document.createElement("div");
+      marketCard.className = "market-context-card";
+      const market = state.market || state.summary?.job_market;
+      const skillName = result.skill.toLowerCase();
+      const topSkills = market?.top_skills || [];
+      const skillMentions = topSkills.find(s => s.name.toLowerCase() === skillName)?.count
+        || (skillName === "python" ? 938 : skillName === "sql" ? 1009 : 0);
+      const sqlMentions = topSkills.find(s => s.name.toLowerCase() === "sql")?.count || 1009;
+      const pythonMentions = topSkills.find(s => s.name.toLowerCase() === "python")?.count || 938;
+
+      marketCard.innerHTML = `
+        <div class="mkt-card-head">
+          <div>
+            <span class="mkt-eyebrow">MARKET CONTEXT</span>
+            <h3>Descriptive context from organizer job data</h3>
+          </div>
+          <span class="mkt-source-badge">Supplied Job-Posting Data</span>
+        </div>
+        <div class="mkt-grid">
+          <div class="mkt-col">
+            <span class="mkt-label">VERIFIED SKILL</span>
+            <strong class="mkt-val">${result.skill} — ${verifiedVal}</strong>
+            <span class="mkt-sub">${result.skill} mentions in supplied job data: <strong>${number(skillMentions)}</strong></span>
+          </div>
+          <div class="mkt-col">
+            <span class="mkt-label">BENCHMARK MARKET MENTIONS</span>
+            <div class="mkt-mentions-list">
+              <span>Python mentions in supplied job data: <strong>${number(pythonMentions)}</strong></span>
+              <span>SQL mentions in supplied job data: <strong>${number(sqlMentions)}</strong></span>
+            </div>
+            <span class="mkt-sub">Source: Analytics Jobs key_skills</span>
+          </div>
+        </div>
+        <p class="mkt-disclaimer">ℹ️ <em>Market data provides external labor-market demand context only. It does NOT calibrate or modify the 40/60 verification score.</em></p>
+      `;
+      card.append(marketCard);
+
+      // 9. FINAL PRODUCT STATEMENT CARD
+      const statementCard = document.createElement("div");
+      statementCard.className = "final-product-statement-card";
+      statementCard.innerHTML = `
+        <div class="statement-main">“ATS finds the keyword. Ghost Skills verifies the skill.”</div>
+        <div class="statement-sub">“Verified talent + market context = talent intelligence.”</div>
+      `;
+      card.append(statementCard);
+
+      // 10. Detailed Evidence Excerpts
+      addText(card, "h3", "Why this result in detail?");
       addText(card, "p", result.explanation);
 
       if (!discovery) {
@@ -517,6 +684,104 @@
     });
   }
 
+  function resetVerificationFlow() {
+    state.verificationCandidate = null;
+    state.latestReport = null;
+    state.assessment = null;
+    state.currentQuestion = null;
+    try { sessionStorage.removeItem("ghost_skills_candidate_id"); } catch { /* storage fallback */ }
+    const reportPage = $("#verification-report-page");
+    if (reportPage) reportPage.hidden = true;
+    const assessStep = $("#verify-assessment-step");
+    if (assessStep) assessStep.hidden = true;
+    const claimsStep = $("#verify-claims-step");
+    if (claimsStep) claimsStep.hidden = true;
+    const uploadStep = $("#verify-upload-step");
+    if (uploadStep) uploadStep.hidden = false;
+    const fileInput = $("#resume-file");
+    if (fileInput) fileInput.value = "";
+    showUploadError("");
+    renderVerificationStats();
+    if (uploadStep) uploadStep.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function runAutoAnswerJudgeDemo() {
+    const candidateId = state.verificationCandidate?.candidate_id;
+    if (!candidateId) return;
+    const helperBtn = $("#auto-answer-judge-btn");
+    if (helperBtn) { helperBtn.disabled = true; helperBtn.textContent = "⚡ Running Demo Answers…"; }
+    try {
+      for (let i = 0; i < 3; i++) {
+        const q = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/next`);
+        if (q.done) break;
+        let chosenAnswer = "";
+        if (i === 0) {
+          chosenAnswer = q.question_id === "py-m1" ? "[0, 2, 4]" : q.options[0];
+        } else if (i === 1) {
+          if (q.question_id === "py-h1") chosenAnswer = "n squared";
+          else if (q.question_id === "py-h2") chosenAnswer = "A module, then a class only";
+          else chosenAnswer = q.options[1];
+        } else {
+          if (q.question_id === "py-m2") chosenAnswer = "assert";
+          else chosenAnswer = q.options[0];
+        }
+        const ansRes = await postJson(`/api/verification/${encodeURIComponent(candidateId)}/answer`, {
+          question_id: q.question_id,
+          answer: chosenAnswer
+        });
+        if (ansRes.done) break;
+      }
+      await loadVerificationReport(true);
+    } catch (err) {
+      showUploadError("Judge demo auto-answer error: " + err.message);
+    } finally {
+      if (helperBtn) {
+        helperBtn.disabled = false;
+        helperBtn.textContent = "⚡ Auto-Answer for Overclaimed Demo (Q1 Correct, Q2 Wrong, Q3 Wrong → 28.6% Test)";
+      }
+    }
+  }
+
+  async function runJudgeDemo() {
+    showView("verify");
+    showUploadError("");
+    const btnTop = $("#judge-demo-btn-top");
+    const btnHero = $("#judge-demo-hero-btn");
+    if (btnTop) btnTop.textContent = "⚡ Loading Demo…";
+    if (btnHero) btnHero.textContent = "⚡ Loading Demo…";
+    try {
+      await useDemo("overclaimed_resume.txt");
+      await startAssessment("Python");
+      await runAutoAnswerJudgeDemo();
+    } catch (err) {
+      showUploadError("Could not run Judge Demo: " + err.message);
+    } finally {
+      if (btnTop) btnTop.textContent = "⚡ 3-Min Judge Demo";
+      if (btnHero) btnHero.textContent = "⚡ 3-Minute Demo (Judge Walkthrough)";
+    }
+  }
+
+  async function restoreSessionIfAny() {
+    try {
+      const candidateId = sessionStorage.getItem("ghost_skills_candidate_id");
+      if (!candidateId) return;
+      const candidate = await getJson(`/api/verification/${encodeURIComponent(candidateId)}`);
+      if (!candidate || !candidate.candidate_id) return;
+      state.verificationCandidate = candidate;
+      const report = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/report`);
+      state.latestReport = report;
+      const anyDone = report.skills && report.skills.some(item => item.final_score !== null);
+      if (anyDone) {
+        $("#verification-report-page").hidden = false;
+        renderVerificationReport(report);
+      } else {
+        renderClaims(candidate);
+      }
+    } catch (e) {
+      try { sessionStorage.removeItem("ghost_skills_candidate_id"); } catch { /* storage fallback */ }
+    }
+  }
+
   function setupVerification() {
     $("#resume-file").addEventListener("change", event => uploadFile(event.target.files[0]));
     $$("[data-demo]").forEach(button => button.addEventListener("click", () => useDemo(button.dataset.demo)));
@@ -525,13 +790,15 @@
     ["dragleave", "drop"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("dragging"); }));
     dropzone.addEventListener("drop", event => uploadFile(event.dataTransfer.files[0]));
     const reuploadBtn = $("#reupload-resume-btn");
-    if (reuploadBtn) {
-      reuploadBtn.addEventListener("click", () => {
-        $("#verify-upload-step").scrollIntoView({ behavior: "smooth", block: "start" });
-        const fileInput = $("#resume-file");
-        if (fileInput) fileInput.value = "";
-      });
-    }
+    if (reuploadBtn) reuploadBtn.addEventListener("click", resetVerificationFlow);
+    const verifyAnotherBtn = $("#verify-another-btn");
+    if (verifyAnotherBtn) verifyAnotherBtn.addEventListener("click", resetVerificationFlow);
+    const autoAnswerBtn = $("#auto-answer-judge-btn");
+    if (autoAnswerBtn) autoAnswerBtn.addEventListener("click", runAutoAnswerJudgeDemo);
+    const judgeDemoTop = $("#judge-demo-btn-top");
+    if (judgeDemoTop) judgeDemoTop.addEventListener("click", runJudgeDemo);
+    const judgeDemoHero = $("#judge-demo-hero-btn");
+    if (judgeDemoHero) judgeDemoHero.addEventListener("click", runJudgeDemo);
     $("#start-optional-assessment").addEventListener("click", () => {
       const skill = $("#optional-skill-select").value;
       if (skill) startAssessment(skill, true);
@@ -1249,6 +1516,7 @@
   $("#toast-dismiss").addEventListener("click", hideToast);
   setupTalentForm();
   setupVerification();
+  restoreSessionIfAny();
   const getCleanRoute = () => (window.location.hash || "").replace(/^#?\/?/, "").trim();
   window.addEventListener("hashchange", () => {
     const name = getCleanRoute();

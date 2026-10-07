@@ -4,9 +4,9 @@
 
 ## Executive Summary
 
-The two job-posting sources contain 17,443 records. The DataScience Jobs file reports 108,846 combined row counts using its `num_of_jobs` field and one row per record for the other source; this is not a deduplicated vacancy total.
+The four supplied datasets contain 17,743 total rows (Analytics Jobs: 15,841 rows; DataScience Jobs: 1,602 rows; JDS: 139 rows; SDS: 161 rows). The two job-posting sources account for 17,443 source records. Across DataScience Jobs, the internal `num_of_jobs` column reports a cumulative sum of 93,005 positions across its 1,602 records; this is an internal posting field and is never conflated with deduplicated unique vacancies.
 
-The most frequent parsed skill mentions are analytics (1,048), sql (1,009), python (938), finance (811), java (752). In the five-fold stratified evaluation, the selected JDS model was JDS Logistic Regression and the selected SDS model was SDS Random Forest. Their internal estimates are based on 139 and 161 complete cases respectively and are not external validation.
+The most frequent parsed skill mentions are analytics (1,048), sql (1,009), python (938), finance (811), java (752). In the five-fold stratified evaluation, the selected JDS model was JDS Logistic Regression (Macro-F1 0.8340) and the selected SDS model was SDS Random Forest (Macro-F1 0.9564). Their internal estimates are based on 139 and 161 complete cases respectively and are not external validation.
 
 The targets are stored as numeric codes 0 and 1. Because no authoritative code-to-meaning mapping was included in the files, the models preserve those labels as encoded classes. The SDS classifier is exploratory association with the supplied label, not a universal personality-based hiring truth. No causal effects are inferred.
 
@@ -16,7 +16,7 @@ How can observed job-market demand, technical skill outcomes, and workforce-trai
 
 ## 2. Business Context
 
-The prototype provides aggregate views of the supplied job postings and two small tabular classifiers. It can help teams form questions about advertised roles and skills. It is not a resume-verification service, individual hiring score, or causal workforce study. A recruiter should not use an SDS prediction to screen a person.
+Ghost Skills is a Skill Trust Layer that measures the gap between what a candidate claims on a resume and what they can demonstrate in verified execution ("ATS finds the keyword. Ghost Skills verifies the skill."). It pairs multi-factor resume evidence extraction (40%) with an adaptive technical check (60%) into a deterministic verification score (`0.4 × Evidence + 0.6 × Test`), contextualized by local workforce-market aggregates. In parallel, the application provides two small tabular classifiers: JDS (technical skill modeling for salary-hike cohort association) and SDS (exploratory workforce-trait modeling). Crucially, SDS is strictly exploratory and must never be used as a hiring or suitability score.
 
 ## 3. Data Sources
 
@@ -80,9 +80,9 @@ Feature ranges are observed sample ranges, not validated scales or recommended i
 
 ## 8. Job-Market Analysis
 
-The two job files contain 17,443 source rows. Across the listed `num_of_jobs` value and one-per-row counts for the other source, the arithmetic total is 108,846; it is not a deduplicated vacancy count or a market-size estimate.
+The two job files contain 17,443 source rows (Analytics Jobs = 15,841 rows, DataScience Jobs = 1,602 rows). Across DataScience Jobs, the `num_of_jobs` column reports 93,005 positions; neither measure represents a deduplicated market total.
 
-Top role rows: Business Analyst (296); Data Scientist (252); Data Analyst (237); Data Engineer (207); Senior Business Analyst (206); Senior Data Scientist (199); Senior Data Analyst (195); Senior Data Engineer (184).
+Top role rows across sources: Business Analyst (108 in Analytics Jobs, 188 in DataScience Jobs); Data Scientist (64 in Analytics Jobs, 188 in DataScience Jobs); Data Analyst (50 in Analytics Jobs, 187 in DataScience Jobs); Data Engineer (188 in DataScience Jobs); Senior Business Analyst (187 in DataScience Jobs); Senior Data Scientist (185 in DataScience Jobs); Senior Data Analyst (187 in DataScience Jobs); Senior Data Engineer (183 in DataScience Jobs).
 Top skill mentions: analytics (1,048); sql (1,009); python (938); finance (811); java (752); business analysis (730); machine learning (724); data analysis (721); r (719); sas (715).
 Most frequent normalized location components: Bengaluru (4,108); Mumbai (2,643); Gurgaon (2,129); Delhi NCR (1,363); Pune (1,253); Hyderabad (1,179); Chennai (1,083); Noida (682).
 Top company job counts as reported in DataScience Jobs: TCS (9,064); Accenture (5,425); Cognizant (3,813); Wipro (2,566); IBM (2,480); Genpact (2,147); Capgemini (1,994); L&T Infotech (1,873).
@@ -213,7 +213,7 @@ The job-posting files and traits files contain different units and no documented
 ## 14. Key Findings
 
 - analytics is the most frequent normalized skill mention (1,048) in the parsed skill text.
-- Business Analyst is the most frequent role label (296 source rows) under the standardized role-field extraction.
+- Business Analyst is the most frequent role label across the job datasets (108 Analytics Jobs source rows, 188 DataScience Jobs source rows) under standardized role-field extraction.
 - The parsed DataScience salary and minimum-experience fields have a within-source Pearson correlation of 0.593 over 1,602 rows.
 - JDS Logistic Regression has five-fold out-of-fold accuracy 0.835 and macro F1 0.834 on 139 rows. This estimate is internal to the supplied sample.
 - SDS Random Forest has five-fold out-of-fold accuracy 0.957 and macro F1 0.956 on 161 rows. This estimate is internal to the supplied sample.

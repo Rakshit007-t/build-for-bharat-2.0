@@ -851,3 +851,868 @@
   color: inherit!important;
   line-height: 1.45;
 }
+
+/* ==========================================================================
+   Judge-Ready Enhancements & USP Trust Layer Styles
+   ========================================================================== */
+
+/* USP Tagline Banner */
+.usp-tagline-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  margin: 0 0 16px;
+  background: linear-gradient(95deg, #1e293b, #2c3e66);
+  color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(24, 36, 59, 0.08);
+}
+.usp-badge {
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .8px;
+  background: #4f46e5;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.usp-phrase {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+  color: #f8fafc;
+}
+.usp-subtext {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: auto;
+}
+
+/* Judge Demo Action Buttons */
+.judge-demo-topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: 750 11px "Segoe UI", Inter, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.judge-demo-topbar-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(217, 119, 6, 0.4);
+}
+.judge-demo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 18px;
+  font: 750 12px "Segoe UI", Inter, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+  transition: transform .18s ease;
+}
+.judge-demo-btn:hover {
+  transform: translateY(-2px);
+}
+.judge-answer-helper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  margin: 12px 0 0;
+  background: #fef3c7;
+  border: 1px dashed #d97706;
+  color: #92400e;
+  border-radius: 8px;
+  font: 750 11px "Segoe UI", Inter, sans-serif;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.judge-answer-helper-btn:hover {
+  background: #fde68a;
+}
+
+/* 6-Metric USP Grid */
+.report-usp-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr) 1.2fr;
+  gap: 8px;
+  margin: 16px 0;
+}
+@media (max-width: 900px) {
+  .report-usp-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 580px) {
+  .report-usp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.report-metric-tile {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 3px;
+}
+.report-metric-tile .tile-label {
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .6px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+.report-metric-tile .tile-value {
+  font-size: 15px;
+  font-weight: 850;
+  color: #1e293b;
+  letter-spacing: -.2px;
+}
+.report-metric-tile .tile-sub {
+  font-size: 9px;
+  color: #94a3b8;
+}
+.report-metric-tile.tile-highlight {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.report-metric-tile.tile-highlight .tile-value {
+  font-size: 18px;
+  color: #4338ca;
+  font-weight: 900;
+}
+.report-metric-tile.tile-verdict {
+  background: #ffffff;
+}
+.tile-verdict.verdict-overclaimed .tile-value {
+  color: #dc2626;
+  font-weight: 900;
+}
+.tile-verdict.verdict-confirmed .tile-value {
+  color: #059669;
+  font-weight: 900;
+}
+.tile-verdict.verdict-underclaimed .tile-value {
+  color: #2563eb;
+  font-weight: 900;
+}
+
+/* Verdict Badges */
+.verdict-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.verdict-badge .verdict-label {
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .8px;
+}
+.verdict-badge .verdict-val {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .3px;
+}
+.verdict-badge.verdict-overclaimed {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+.verdict-badge.verdict-confirmed {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+.verdict-badge.verdict-underclaimed {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+/* Formula Proof Box */
+.formula-proof-box {
+  background: #f8faff;
+  border: 1px solid #dbeafe;
+  border-left: 4px solid #4f46e5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0;
+}
+.formula-math-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #1e293b;
+}
+.formula-math-display strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  color: #312e81;
+}
+.formula-sub {
+  font-size: 10px;
+  color: #64748b;
+  margin: 4px 0 0!important;
+}
+
+/* Why This Verdict Box */
+.why-verdict-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 16px 0;
+}
+.why-verdict-box h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .6px;
+  color: #334155;
+  text-transform: uppercase;
+}
+.why-verdict-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+@media (max-width: 680px) {
+  .why-verdict-list {
+    grid-template-columns: 1fr;
+  }
+}
+.why-verdict-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #475569;
+}
+.why-check {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 900;
+}
+.why-label {
+  color: #64748b;
+}
+.why-verdict-item strong {
+  color: #1e293b;
+  margin-left: auto;
+}
+.verdict-explanation-quote {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 0!important;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.verdict-explanation-quote.quote-overclaimed {
+  background: #fef2f2;
+  border-left: 3px solid #ef4444;
+  color: #991b1b;
+}
+.verdict-explanation-quote.quote-confirmed {
+  background: #ecfdf5;
+  border-left: 3px solid #10b981;
+  color: #065f46;
+}
+.verdict-explanation-quote.quote-underclaimed {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  color: #1e40af;
+}
+
+/* Trust Gap Visualization */
+.skill-trust-gap-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0;
+}
+.trust-gap-pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.gap-step {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 105px;
+  flex: 1;
+}
+.gap-step-num {
+  display: block;
+  font-size: 8px;
+  font-weight: 850;
+  color: #94a3b8;
+  letter-spacing: .6px;
+}
+.gap-step-name {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #334155;
+  margin: 2px 0;
+}
+.gap-step-val {
+  display: block;
+  font-size: 12px;
+  font-weight: 850;
+  color: #1e293b;
+}
+.gap-arrow {
+  color: #94a3b8;
+  font-size: 16px;
+  font-weight: 900;
+}
+.gap-analysis-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.level-comparison-bars {
+  display: grid;
+  gap: 10px;
+}
+.level-bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 100px;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .level-bar-row {
+    grid-template-columns: 100px 1fr 80px;
+  }
+}
+.bar-row-label {
+  color: #64748b;
+  font-weight: 650;
+}
+.bar-track {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+.claimed-fill {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+}
+.verified-fill.tier-overclaimed {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+.verified-fill.tier-confirmed {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+.verified-fill.tier-underclaimed {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+.bar-val {
+  text-align: right;
+  font-weight: 800;
+  color: #1e293b;
+}
+.gap-disclaimer {
+  display: block;
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 10px;
+  text-align: right;
+}
+
+/* Verified Skill Passport Card */
+.verified-passport-card {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  color: #ffffff;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin: 18px 0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+}
+.passport-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.passport-badge-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.passport-shield {
+  font-size: 16px;
+}
+.passport-badge-title strong {
+  font-size: 13px;
+  letter-spacing: .8px;
+  font-weight: 850;
+  color: #f1f5f9;
+}
+.passport-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+  padding: 3px 9px;
+  font-size: 9px;
+  font-weight: 750;
+  color: #94a3b8;
+  letter-spacing: .6px;
+}
+.passport-candidate-line {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.passport-candidate-line strong {
+  color: #ffffff;
+}
+.passport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 680px) {
+  .passport-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.passport-field-lbl {
+  display: block;
+  font-size: 8px;
+  font-weight: 850;
+  color: #94a3b8;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+.passport-field-val {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-top: 3px;
+}
+.passport-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 9px;
+  color: #64748b;
+}
+.passport-status-stamp {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+.passport-status-stamp.stamp-overclaimed {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+}
+.passport-status-stamp.stamp-confirmed {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #6ee7b7;
+}
+.passport-status-stamp.stamp-underclaimed {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
+  color: #93c5fd;
+}
+
+/* Market Context Card */
+.market-context-card {
+  background: #f8faff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 18px 0;
+}
+.market-context-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.market-context-header h3 {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+.market-context-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+.market-stat-callout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.market-stat-callout {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.mstat-val {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1e40af;
+  line-height: 1.1;
+}
+.mstat-lbl {
+  font-size: 11px;
+  font-weight: 750;
+  color: #334155;
+  margin-top: 3px;
+}
+.mstat-source {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 2px;
+}
+.market-context-footer {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.45;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+
+/* Phase 14 Job Market Hero Stats */
+.market-hero-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .market-hero-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.market-hero-stat-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.04);
+}
+.market-hero-stat-card.highlight {
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #f0f7ff, #ffffff);
+}
+.market-hero-stat-val {
+  font-size: clamp(24px, 2.8vw, 32px);
+  font-weight: 900;
+  letter-spacing: -.6px;
+  color: #1e293b;
+  line-height: 1.1;
+}
+.market-hero-stat-card.highlight .market-hero-stat-val {
+  color: #2563eb;
+}
+.market-hero-stat-lbl {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  margin-top: 5px;
+}
+.market-hero-stat-note {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+/* Phase 13 Model Winner Callouts */
+.model-winner-callout {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #10b981;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 12px 0 16px;
+}
+.winner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 10px;
+  font-weight: 850;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.winner-rationale {
+  font-size: 11px;
+  color: #334155;
+  line-height: 1.45;
+  margin: 4px 0 6px!important;
+}
+.winner-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 700;
+}
+.winner-stats strong {
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Killer Mode — Skill Truth Signature Styling
+   ========================================================================== */
+
+/* Wow Moment Callout Box */
+.skill-truth-callout {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin: 14px 0 16px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: fade .25s ease;
+}
+.skill-truth-callout .callout-hero-text {
+  font-size: clamp(15px, 2vw, 19px);
+  font-weight: 900;
+  letter-spacing: -.3px;
+  line-height: 1.35;
+}
+.skill-truth-callout .callout-subtext {
+  font-size: 12px;
+  font-weight: 750;
+  opacity: .88;
+}
+.skill-truth-callout.callout-overclaimed {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+  border-left: 6px solid #dc2626;
+}
+.skill-truth-callout.callout-confirmed {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+  border-left: 6px solid #059669;
+}
+.skill-truth-callout.callout-underclaimed {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  border-left: 6px solid #2563eb;
+}
+
+/* CLAIM → PROOF → DEMONSTRATION → TRUTH Visual */
+.claim-proof-truth-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0;
+}
+.cpt-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cpt-node {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+  flex: 1;
+  min-width: 125px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cpt-tag {
+  font-size: 9px;
+  font-weight: 850;
+  color: #64748b;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+.cpt-val {
+  font-size: 14px;
+  font-weight: 850;
+  color: #1e293b;
+  line-height: 1.25;
+}
+.cpt-desc {
+  font-size: 9px;
+  color: #94a3b8;
+}
+.cpt-arrow {
+  color: #94a3b8;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+.cpt-node-truth {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.cpt-node-truth .cpt-tag {
+  color: #4338ca;
+}
+.cpt-node-truth .cpt-val {
+  color: #312e81;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* Why This Result Inline Formatting */
+.why-result-statement {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+  margin: 6px 0 12px!important;
+}
+.verdict-inline-overclaimed {
+  color: #dc2626;
+  font-weight: 900;
+}
+.verdict-inline-confirmed {
+  color: #059669;
+  font-weight: 900;
+}
+.verdict-inline-underclaimed {
+  color: #2563eb;
+  font-weight: 900;
+}
+.formula-rule {
+  font-size: 10px;
+  color: #64748b;
+  margin-left: 8px;
+}
+
+/* Skill Trust Gap Comparison Pill */
+.gap-message-title {
+  font-size: 14px;
+  font-weight: 850;
+  color: #1e293b;
+  margin-left: 8px;
+}
+.gap-comparison-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pill-claimed {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 850;
+}
+.pill-vs {
+  font-size: 9px;
+  font-weight: 900;
+  color: #94a3b8;
+}
+.pill-verified {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+/* Final Product Statement Card */
+.final-product-statement-card {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin: 18px 0;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+}
+.final-product-statement-card .statement-main {
+  font-size: clamp(14px, 1.8vw, 17px);
+  font-weight: 850;
+  letter-spacing: -.2px;
+  color: #f8fafc;
+}
+.final-product-statement-card .statement-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-top: 5px;
+}
