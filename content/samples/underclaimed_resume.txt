@@ -1,0 +1,21 @@
+GHOST SKILLS SYNTHETIC DEMO RESUME — NOT A REAL PERSON
+Name: Kabir Anand
+Education: B.Tech Computer Science, 2025
+
+Technical Skills
+Python — Intermediate
+SQL — Intermediate
+Machine Learning — Intermediate
+
+Projects
+- Built a Python demand forecasting project using pandas and scikit-learn; trained and evaluated models with a held-out set.
+- Developed a SQL analytics project with PostgreSQL joins, window functions, and grouped reporting.
+- Created a machine learning classification project and analyzed precision, recall, and cross-validation results.
+
+Experience
+- Data internship: deployed a Python data-cleaning tool and created SQL summaries for weekly reporting.
+
+Certifications
+- Machine Learning certification covering model evaluation and feature preparation.
+
+This synthetic resume is intended to support strong local assessment answers while retaining intermediate self-reported claims.

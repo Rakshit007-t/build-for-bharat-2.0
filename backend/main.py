@@ -3,10 +3,11 @@ import json
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from backend.schemas.api_models import (
     HealthResponse,
@@ -24,11 +25,23 @@ from backend.schemas.api_models import (
 from backend.services.analysis_service import AnalysisService
 from backend.services.model_service import ModelService
 from backend.services.talent_service import TalentProfileService
+from backend.services.resume_service import parse_resume, extract_pdf_text
+from backend.services.assessment_service import AssessmentService
 
 app = FastAPI(title="Ghost Skills API", version="0.1.0")
 app.state.analysis_service = AnalysisService()
 app.state.model_service = ModelService()
 app.state.talent_profile_service = TalentProfileService()
+app.state.assessment_service = AssessmentService()
+
+
+class VerificationStartInput(BaseModel):
+    skill: str
+
+
+class VerificationAnswerInput(BaseModel):
+    question_id: str
+    answer: str = Field(min_length=1, max_length=1000)
 
 
 @app.exception_handler(RequestValidationError)
@@ -73,6 +86,107 @@ def talent_profile(payload: TalentProfileInput) -> TalentProfileResponse:
     if market.status != "ready" or market.summary is None:
         raise HTTPException(status_code=503, detail=market.detail or "Local job-market summary is unavailable.")
     return app.state.talent_profile_service.analyze(payload, market.summary.model_dump())
+
+
+@app.post("/api/verification/upload")
+async def upload_resume(file: UploadFile | None = File(default=None), text: str | None = Form(default=None)):
+    """Extract a local PDF/TXT resume or explicitly submitted text."""
+    if file is None and not text:
+        raise HTTPException(status_code=422, detail="Provide a PDF/TXT file or resume text.")
+    if file is not None:
+        filename = (file.filename or "").lower()
+        payload = await file.read(5 * 1024 * 1024 + 1)
+        if len(payload) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Resume files must be 5 MB or smaller.")
+        if filename.endswith(".pdf"):
+            try:
+                resume_text = extract_pdf_text(payload)
+            except Exception as exc:
+                raise HTTPException(status_code=422, detail=f"Could not extract PDF text: {exc}") from exc
+        elif filename.endswith(".txt"):
+            resume_text = payload.decode("utf-8-sig", errors="replace")
+        else:
+            raise HTTPException(status_code=415, detail="Upload a PDF or TXT resume.")
+    else:
+        resume_text = text or ""
+    if not resume_text.strip():
+        raise HTTPException(status_code=422, detail="No readable text was found in the resume.")
+    if len(resume_text) > 200_000:
+        raise HTTPException(status_code=413, detail="Resume text must be 200,000 characters or shorter.")
+    extracted = parse_resume(resume_text)
+    if not extracted["skills"]:
+        raise HTTPException(status_code=422, detail="No supported skills were detected (Python, SQL, Machine Learning).")
+    candidate_id = app.state.assessment_service.save_candidate(extracted, resume_text)
+    return {"candidate_id": candidate_id, "name": extracted["name"], "education": extracted["education"],
+            "skills": [{"skill": row["skill"], "claimed_level": row["claimed_level"],
+                        "evidence_snippets": row["evidence_snippets"], "evidence_score": None} for row in extracted["skills"]],
+            "projects": extracted["projects"], "certifications": extracted["certifications"],
+            "notice": "Claims and excerpts are deterministic local extraction; evidence score is a prototype heuristic."}
+
+
+@app.get("/api/verification/stats")
+def verification_stats():
+    return app.state.assessment_service.stats()
+
+
+@app.get("/api/verification/demo/{sample_name}")
+def verification_demo(sample_name: str):
+    allowed = {"overclaimed_resume.txt", "underclaimed_resume.txt", "confirmed_resume.txt"}
+    if sample_name not in allowed:
+        raise HTTPException(status_code=404, detail="Demo resume not found.")
+    sample = Path(__file__).resolve().parent.parent / "content" / "samples" / sample_name
+    return {"filename": sample_name, "text": sample.read_text(encoding="utf-8")}
+
+
+@app.get("/api/verification/{candidate_id}")
+def get_verification(candidate_id: str):
+    candidate = app.state.assessment_service.candidate(candidate_id)
+    if candidate is None:
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+    return {key: value for key, value in candidate.items() if key != "resume_text"}
+
+
+@app.post("/api/verification/{candidate_id}/start")
+def start_verification(candidate_id: str, payload: VerificationStartInput):
+    try:
+        session_id = app.state.assessment_service.start(candidate_id, payload.skill)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"session_id": session_id, "candidate_id": candidate_id, "skill": payload.skill, "total": 3}
+
+
+@app.get("/api/verification/{candidate_id}/next")
+def next_verification_question(candidate_id: str):
+    if app.state.assessment_service.candidate(candidate_id) is None:
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+    try:
+        return app.state.assessment_service.next_question(candidate_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/api/verification/{candidate_id}/answer")
+def answer_verification_question(candidate_id: str, payload: VerificationAnswerInput):
+    try:
+        return app.state.assessment_service.answer(candidate_id, payload.question_id, payload.answer)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/verification/{candidate_id}/report")
+def verification_report(candidate_id: str):
+    report = app.state.assessment_service.report(candidate_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+    return report
 
 
 @app.get("/api/models", response_model=ModelsResponse)

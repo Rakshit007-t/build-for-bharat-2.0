@@ -1,0 +1,15 @@
+GHOST SKILLS SYNTHETIC DEMO RESUME — NOT A REAL PERSON
+Name: Meera Kapoor
+Education: B.Sc. Mathematics, 2025
+
+Technical Skills
+Python — Intermediate
+SQL — Intermediate
+Machine Learning — Intermediate
+
+Projects
+- Built a Python project that analyzed a small public-style sample and documented the data cleaning steps.
+- Developed a second Python project that compared two simple approaches and summarized the evaluation output.
+- Created a SQL project with grouped summaries and a basic join.
+
+This synthetic resume has two concrete Python project excerpts. Two correct Python answers (the medium question and next hard question), followed by one missed hard question, produce an intermediate confirmed result under the published weighted formula.

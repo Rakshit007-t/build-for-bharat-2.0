@@ -3,7 +3,8 @@
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { summary: null, models: null, market: null, readiness: null, figures: [], refreshInFlight: false };
+  const state = { summary: null, models: null, market: null, readiness: null, figures: [], refreshInFlight: false,
+    verificationCandidate: null, assessment: null, currentQuestion: null, latestReport: null };
   const labels = {
     big_data_skills: "Big data skills", maths_stats_skills: "Maths & statistics", coding_skills: "Coding skills",
     ai_and_ml_skills: "AI & machine learning", dashboard_and_storytelling_skills: "Dashboard & storytelling",
@@ -23,6 +24,218 @@
       throw new Error(message);
     }
     return response.json();
+  }
+
+  async function postJson(path, payload) {
+    const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
+    const body = await response.json();
+    if (!response.ok) throw new Error(formatApiDetail(body.detail) || `Request failed (${response.status})`);
+    return body;
+  }
+
+  function showUploadError(message = "") { $("#upload-error").textContent = message; }
+
+  async function acceptResume(formData) {
+    showUploadError("");
+    const response = await fetch("/api/verification/upload", { method: "POST", body: formData, headers: { Accept: "application/json" } });
+    const body = await response.json();
+    if (!response.ok) throw new Error(formatApiDetail(body.detail) || `Upload failed (${response.status})`);
+    state.verificationCandidate = body;
+    state.latestReport = null;
+    state.assessment = null;
+    state.currentQuestion = null;
+    $("#verification-report-page").hidden = true;
+    $("#verify-assessment-step").hidden = true;
+    renderClaims(body);
+  }
+
+  function renderClaims(candidate) {
+    $("#verify-claims-step").hidden = false;
+    $("#candidate-heading").textContent = `${candidate.name || "Candidate"} · detected skill claims`;
+    $("#candidate-education").textContent = candidate.education ? `Education: ${candidate.education}` : "Education was not explicitly extracted.";
+    const rows = $("#claims-rows"); rows.replaceChildren();
+    candidate.skills.forEach(claim => {
+      const row = document.createElement("tr"); row.dataset.skillRow = claim.skill;
+      const skill = document.createElement("th"); skill.scope = "row"; skill.textContent = claim.skill;
+      const level = document.createElement("td"); level.textContent = claim.claimed_level;
+      const excerpts = document.createElement("td");
+      if (claim.evidence_snippets?.length) {
+        const list = document.createElement("ul"); list.className = "excerpt-list";
+        claim.evidence_snippets.forEach(snippet => { const item = document.createElement("li"); item.textContent = `“${snippet}”`; list.append(item); });
+        excerpts.append(list);
+      } else excerpts.textContent = "No concrete supporting excerpt detected.";
+      const statusCell = document.createElement("td"); statusCell.className = "claim-status";
+      const knownResult = state.latestReport?.skills?.find(item => item.skill === claim.skill);
+      statusCell.textContent = knownResult?.status || (claim.claimed_level === "Unspecified" ? "Unverified" : "Pending");
+      const action = document.createElement("td");
+      const button = document.createElement("button"); button.className = "small-action"; button.type = "button"; button.textContent = "Start Verification";
+      button.addEventListener("click", () => startAssessment(claim.skill)); action.append(button);
+      row.append(skill, level, excerpts, statusCell, action); rows.append(row);
+    });
+    $("#verify-claims-step").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function uploadFile(file) {
+    if (!file) return;
+    const form = new FormData(); form.append("file", file, file.name);
+    try { await acceptResume(form); } catch (error) { showUploadError(error.message); }
+  }
+
+  async function useDemo(filename) {
+    showUploadError("");
+    try {
+      const sample = await getJson(`/api/verification/demo/${encodeURIComponent(filename)}`);
+      const form = new FormData(); form.append("text", sample.text);
+      await acceptResume(form);
+    } catch (error) { showUploadError(error.message); }
+  }
+
+  async function startAssessment(skill) {
+    const candidateId = state.verificationCandidate?.candidate_id;
+    if (!candidateId) return;
+    try {
+      state.assessment = await postJson(`/api/verification/${encodeURIComponent(candidateId)}/start`, { skill });
+      state.currentQuestion = null;
+      $("#assessment-heading").textContent = `${skill} verification`;
+      $("#verification-report-page").hidden = true;
+      $("#verify-assessment-step").hidden = false;
+      await loadQuestion();
+      $("#verify-assessment-step").scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) { showUploadError(error.message); }
+  }
+
+  async function loadQuestion() {
+    const candidateId = state.verificationCandidate?.candidate_id;
+    const question = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/next`);
+    if (question.done) { await loadVerificationReport(); return; }
+    state.currentQuestion = question;
+    $("#question-progress-label").textContent = `Question ${question.index} of ${question.total}`;
+    const progress = Math.round(((question.index - 1) / question.total) * 100);
+    $("#question-progress-percent").textContent = `${progress}%`;
+    $("#question-progress-fill").style.width = `${progress}%`;
+    $("#question-difficulty").textContent = question.difficulty;
+    $("#question-difficulty").className = `difficulty-badge ${question.difficulty}`;
+    $("#question-prompt").textContent = question.prompt;
+    $("#answer-feedback").hidden = true;
+    $("#continue-question").hidden = true;
+    const options = $("#answer-options"); options.replaceChildren();
+    question.options.forEach((option, index) => {
+      const button = document.createElement("button"); button.type = "button"; button.className = "answer-option";
+      button.textContent = option; button.addEventListener("click", () => submitAnswer(option)); options.append(button);
+    });
+  }
+
+  async function submitAnswer(answer) {
+    const candidateId = state.verificationCandidate?.candidate_id;
+    const question = state.currentQuestion;
+    if (!candidateId || !question) return;
+    $$(".answer-option", $("#answer-options")).forEach(button => { button.disabled = true; if (button.textContent === answer) button.classList.add("selected"); });
+    try {
+      const result = await postJson(`/api/verification/${encodeURIComponent(candidateId)}/answer`, { question_id: question.question_id, answer });
+      const feedback = $("#answer-feedback"); feedback.hidden = false; feedback.className = `answer-feedback ${result.correct ? "correct" : "incorrect"}`;
+      feedback.textContent = `${result.correct ? "Correct." : "Not quite."} ${result.explanation}`;
+      const continueButton = $("#continue-question"); continueButton.hidden = false;
+      continueButton.textContent = result.done ? "View verification report" : "Continue";
+      continueButton.onclick = async () => {
+        if (result.done) {
+          $("#question-progress-label").textContent = "Assessment complete · 3 of 3";
+          $("#question-progress-percent").textContent = "100%";
+          $("#question-progress-fill").style.width = "100%";
+          await loadVerificationReport();
+        } else await loadQuestion();
+      };
+    } catch (error) {
+      $("#answer-feedback").hidden = false; $("#answer-feedback").className = "answer-feedback incorrect";
+      $("#answer-feedback").textContent = error.message;
+      $$(".answer-option", $("#answer-options")).forEach(button => { button.disabled = false; });
+    }
+  }
+
+  function addText(parent, tag, text, className = "") {
+    const element = document.createElement(tag); element.textContent = text; if (className) element.className = className; parent.append(element); return element;
+  }
+
+  function renderVerificationReport(report) {
+    state.latestReport = report;
+    const candidate = report.candidate;
+    $("#report-candidate").textContent = `${candidate.name}${candidate.education ? ` · ${candidate.education}` : ""} · Candidate ID ${candidate.candidate_id}`;
+    const root = $("#verification-results"); root.replaceChildren();
+    const completed = report.skills.filter(item => item.final_score !== null);
+    root.classList.toggle("single-result", completed.length === 1);
+    completed.forEach(result => {
+      const card = document.createElement("article"); card.className = `result-card status-${result.status}`;
+      const header = document.createElement("div"); header.className = "result-card-header";
+      const title = document.createElement("div"); addText(title, "p", result.skill.toUpperCase(), "eyebrow"); addText(title, "h2", `${result.status.toUpperCase()}`);
+      const score = addText(header, "strong", `${result.final_score.toFixed(1)}`, "result-total"); header.append(title, score);
+      const tiles = document.createElement("div"); tiles.className = "result-metrics";
+      [["CLAIMED", result.claimed_level], ["VERIFIED", result.verified_level || "Unverified"], ["EVIDENCE", result.evidence_score === null ? "—" : `${result.evidence_score.toFixed(1)}/100`], ["TEST", result.test_score === null ? "—" : `${result.test_score.toFixed(1)}/100`], ["FINAL SCORE", `${result.final_score.toFixed(1)}/100`]].forEach(([label, value]) => {
+        const tile = document.createElement("div"); addText(tile, "span", label); addText(tile, "strong", value); tiles.append(tile);
+      });
+      card.append(header, tiles);
+      const calculation = document.createElement("p"); calculation.className = "calculation-line";
+      calculation.textContent = `Evidence ${result.evidence_score.toFixed(1)} × 0.4 = ${(result.evidence_score * 0.4).toFixed(1)}  +  Test ${result.test_score.toFixed(1)} × 0.6 = ${(result.test_score * 0.6).toFixed(1)}  →  Final ${result.final_score.toFixed(1)}`;
+      card.append(calculation);
+      addText(card, "h3", "Why this result?"); addText(card, "p", result.explanation);
+      addText(card, "h3", "Evidence scoring details");
+      const details = document.createElement("ul"); details.className = "excerpt-list";
+      result.evidence_details.forEach(detail => addText(details, "li", detail)); card.append(details);
+      addText(card, "h3", "Resume evidence excerpts");
+      if (result.evidence_snippets.length) {
+        const list = document.createElement("ul"); list.className = "excerpt-list";
+        result.evidence_snippets.forEach(snippet => addText(list, "li", `“${snippet}”`)); card.append(list);
+      } else addText(card, "p", "No concrete supporting excerpt detected.");
+      addText(card, "p", "Prototype heuristic evidence score · Local assessment · Not a hiring decision.", "source-note");
+      root.append(card);
+    });
+    if (!completed.length) addText(root, "p", "Complete a skill assessment to see a result.");
+    const pending = report.skills.filter(item => item.final_score === null);
+    report.skills.forEach(item => {
+      const row = $(`[data-skill-row="${CSS.escape(item.skill)}"]`, $("#claims-rows"));
+      const statusCell = row?.querySelector(".claim-status");
+      if (statusCell) statusCell.textContent = item.final_score === null ? (item.status === "unverified" ? "Unverified" : "Pending") : item.status.toUpperCase();
+    });
+    if (pending.length) {
+      const note = document.createElement("p"); note.className = "pending-skills";
+      note.textContent = `Not yet assessed: ${pending.map(item => `${item.skill} (${item.claimed_level})`).join(", ")}.`; root.append(note);
+    }
+    const market = $("#verification-market-insights");
+    const doneSkills = report.skills.filter(item => item.final_score !== null && item.status !== "unverified").map(item => ({ Python: "python", SQL: "sql", "Machine Learning": "machine_learning" })[item.skill]).filter(Boolean);
+    market.hidden = false;
+    const content = $("#verification-market-content"); content.replaceChildren();
+    if (!doneSkills.length) addText(content, "p", "Market alignment is unavailable until a skill has an explicit claim and a completed assessment.");
+    else postJson("/api/talent/profile", { skills: [...new Set(doneSkills)] }).then(body => renderTalentProfile(body, content)).catch(error => addText(content, "p", `Local job-market analysis unavailable: ${error.message}`));
+    $("#verification-report-page").hidden = false;
+    $("#verification-report-page").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function loadVerificationReport() {
+    const candidateId = state.verificationCandidate?.candidate_id;
+    if (!candidateId) return;
+    try {
+      const report = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/report`);
+      renderVerificationReport(report);
+      renderVerificationStats(await getJson("/api/verification/stats"));
+    } catch (error) { showUploadError(error.message); }
+  }
+
+  async function renderVerificationStats(stats = null) {
+    const root = $("#verification-stats");
+    if (!root) return;
+    try { stats ||= await getJson("/api/verification/stats"); } catch { stats = { confirmed: 0, underclaimed: 0, overclaimed: 0 }; }
+    [["confirmed", "Confirmed"], ["underclaimed", "Underclaimed"], ["overclaimed", "Overclaimed"]].forEach(([key, label], index) => {
+      const card = root.children[index]; if (card) { card.querySelector("span").textContent = label; card.querySelector("strong").textContent = number(stats[key] || 0); }
+    });
+  }
+
+  function setupVerification() {
+    $("#resume-file").addEventListener("change", event => uploadFile(event.target.files[0]));
+    $$("[data-demo]").forEach(button => button.addEventListener("click", () => useDemo(button.dataset.demo)));
+    const dropzone = $("#resume-dropzone");
+    ["dragenter", "dragover"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add("dragging"); }));
+    ["dragleave", "drop"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("dragging"); }));
+    dropzone.addEventListener("drop", event => uploadFile(event.dataTransfer.files[0]));
+    $("#print-report").addEventListener("click", () => window.print());
+    renderVerificationStats();
   }
 
   function formatApiDetail(detail) {
@@ -481,8 +694,8 @@
     section.append(list); parent.append(section);
   }
 
-  function renderTalentProfile(body) {
-    const root = $("#talent-results"); root.replaceChildren();
+  function renderTalentProfile(body, target = $("#talent-results")) {
+    const root = target; root.replaceChildren();
     const heading = document.createElement("h2"); heading.textContent = body.title; root.append(heading);
     const label = document.createElement("p"); label.className = "overlap-label"; label.textContent = "Vocabulary coverage in supplied job-posting data"; root.append(label);
     const score = document.createElement("p"); score.className = "talent-overlap"; score.textContent = percent(body.overlap_percent);
@@ -563,6 +776,7 @@
   $("#toast-retry").addEventListener("click", refresh);
   $("#toast-dismiss").addEventListener("click", hideToast);
   setupTalentForm();
+  setupVerification();
   window.addEventListener("hashchange", () => {
     const name = window.location.hash.slice(1);
     if ($(`#view-${name}`)) showView(name);
