@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 ReadinessStatus = Literal["ready", "artifact_missing", "artifact_invalid"]
@@ -27,7 +27,7 @@ class ReadinessResponse(BaseModel):
 class ModelMetadata(BaseModel):
     model_name: str
     model_version: str
-    training_rows: int | None = Field(default=None, ge=0, exclude=True)
+    training_rows: int | None = Field(default=None, ge=0)
     feature_names: list[str]
     validation_metrics: dict[str, float] = Field(default_factory=dict)
     selected_threshold: float | None = None
@@ -63,6 +63,7 @@ class JobMarketSummary(BaseModel):
     dataset_row_counts: dict[str, int] = Field(default_factory=dict)
     top_roles: list[dict[str, Any]]
     top_skills: list[dict[str, Any]]
+    skill_vocabulary: list[dict[str, Any]] = Field(default_factory=list)
     top_locations: list[dict[str, Any]] = Field(default_factory=list)
     top_companies: list[dict[str, Any]] = Field(default_factory=list)
     top_skill_pairs: list[dict[str, Any]] = Field(default_factory=list)
@@ -126,3 +127,50 @@ class FigureItem(BaseModel):
 
 class FiguresResponse(BaseModel):
     figures: list[FigureItem]
+
+
+TalentSkill = Literal["python", "sql", "machine_learning", "statistics", "big_data", "dashboard_storytelling"]
+
+
+class TalentProfileInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    skills: list[TalentSkill] = Field(min_length=1, max_length=6)
+
+    @field_validator("skills")
+    @classmethod
+    def skills_are_unique(cls, value: list[TalentSkill]) -> list[TalentSkill]:
+        if len(value) != len(set(value)):
+            raise ValueError("Select each skill only once.")
+        return value
+
+
+class TalentSkillEvidence(BaseModel):
+    skill: TalentSkill
+    label: str
+    matched: bool
+    frequency: int
+    supporting_terms: list[str] = Field(default_factory=list)
+
+
+class TalentRoleMatch(BaseModel):
+    role: str
+    role_frequency: int
+    overlap_percent: float
+    matched_skills: list[str]
+    role_skill_rule: list[str]
+
+
+class TalentProfileResponse(BaseModel):
+    title: Literal["Descriptive job-market alignment"]
+    analysis_type: Literal["descriptive_overlap"]
+    overlap_percent: float
+    profile_skill_count: int
+    matched_skills: list[TalentSkillEvidence]
+    unmatched_profile_skills: list[TalentSkillEvidence]
+    missing_high_demand_skills: list[dict[str, Any]]
+    top_role_categories: list[TalentRoleMatch]
+    explanation: str
+    role_matching_note: str
+    skill_frequency_note: str
+    limitations: list[str]

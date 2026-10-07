@@ -101,7 +101,7 @@
     "dashboard_and_storytelling_skills": 1.1185353864696412
   },
   "cv_folds": 5,
-  "created_at": "2026-10-07T09:54:07.128250+00:00",
+  "created_at": "2026-10-07T10:16:53.689595+00:00",
   "limitations": [
     "The target records the supplied salary-hike class and may reflect a narrow sample or a dataset-specific definition.",
     "Cross-validation is internal to the supplied dataset; it does not establish performance on other organizations or populations.",

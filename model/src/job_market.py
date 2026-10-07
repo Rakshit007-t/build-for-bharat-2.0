@@ -181,6 +181,7 @@ def analyze_job_sources(datasets: dict[str, pd.DataFrame], report_dir: Path, fig
         "dataset_row_counts": {name: int(len(df)) for name, df in datasets.items()},
         "top_roles": [{"name": name, "count": int(count)} for name, count in role_counter.most_common(12)],
         "top_skills": [{"name": name, "count": int(count)} for name, count in combined_skills.most_common(20)],
+        "skill_vocabulary": [{"name": name, "count": int(count)} for name, count in combined_skills.most_common()],
         "top_locations": [{"name": name, "count": int(count)} for name, count in location_counter.most_common(12)],
         "locations": [{"name": name, "count": int(count)} for name, count in location_counter.most_common(12)],
         "top_companies": [{"name": name, "count": int(count)} for name, count in company_counter.most_common(12)],

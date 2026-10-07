@@ -10,11 +10,25 @@
     neuroticism: "Neuroticism", extraversion: "Extraversion", openness_to_experience: "Openness to experience",
     agreeableness: "Agreeableness", conscientiousness: "Conscientiousness"
   };
+  const talentOptions = [
+    ["python", "Python"], ["sql", "SQL"], ["machine_learning", "Machine Learning"],
+    ["statistics", "Statistics"], ["big_data", "Big Data"], ["dashboard_storytelling", "Dashboard / Storytelling"]
+  ];
 
   async function getJson(path) {
     const response = await fetch(path, { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new Error(`Request failed (${response.status})`);
+    if (!response.ok) {
+      let message = `Request failed (${response.status})`;
+      try { const body = await response.json(); message = formatApiDetail(body.detail) || message; } catch { /* use status fallback */ }
+      throw new Error(message);
+    }
     return response.json();
+  }
+
+  function formatApiDetail(detail) {
+    if (Array.isArray(detail)) return detail.map(item => `${item.field ? `${item.field}: ` : ""}${item.message || "Invalid input"}`).join("; ");
+    if (typeof detail === "string") return detail;
+    return "";
   }
 
   function showView(name) {
@@ -131,13 +145,16 @@
   }
 
   function renderModelDetail(key, info, comparisonRoot, metricsRoot, featureRoot) {
+    const snapshot = $(`#${key}-model-info`);
     if (!info?.metadata) {
+      if (snapshot) snapshot.textContent = `${key.toUpperCase()} model metadata is unavailable.`;
       if (metricsRoot) metricsRoot.innerHTML = `<div class="metric-card"><small>${key.toUpperCase()} model</small><strong>Not ready</strong><span>Waiting for a valid local artifact</span></div>`;
       if (comparisonRoot) comparisonRoot.textContent = "Model comparison will appear after local evaluation.";
       if (featureRoot) featureRoot.textContent = "Feature interpretation is not available.";
       return;
     }
     const metadata = info.metadata;
+    if (snapshot) snapshot.textContent = `${metadata.model_name} · ${number(metadata.training_rows)} dataset rows · ${metadata.cv_folds || "—"}-fold stratified cross-validation · target: ${key === "sds" ? "encoded organizational-success class" : "encoded salary-hike class"}.`;
     const metrics = metadata.validation_metrics || {};
     if (metricsRoot) {
       metricsRoot.replaceChildren();
@@ -205,8 +222,9 @@
       image.src = item.path;
       image.alt = item.name;
       image.loading = "lazy";
-      const caption = document.createElement("figcaption");
-      caption.textContent = item.name;
+        const caption = document.createElement("figcaption");
+        caption.textContent = item.name;
+        image.addEventListener("error", () => { figure.replaceChildren(caption); caption.textContent = `${item.name} · figure unavailable`; });
       figure.append(image, caption);
       if (item.name.toLowerCase().includes("job market") || item.path.includes("job_market")) market.append(figure.cloneNode(true));
       if (overview.children.length < 4) overview.append(figure.cloneNode(true));
@@ -214,7 +232,7 @@
       $$(".figure-slot").forEach(slot => {
         const match = slot.dataset.figureMatch;
         if (name.includes(match) || item.path.toLowerCase().includes(match.replaceAll(" ", "_")) || (match.startsWith("jds") && item.path.toLowerCase().includes("jds/") && item.name.toLowerCase().includes(match.replace("jds ", ""))) || (match.startsWith("sds") && item.path.toLowerCase().includes("sds/") && item.name.toLowerCase().includes(match.replace("sds ", "")))) {
-          const img = document.createElement("img"); img.src = item.path; img.alt = item.name; img.loading = "lazy"; slot.append(img);
+          const img = document.createElement("img"); img.src = item.path; img.alt = item.name; img.loading = "lazy"; img.addEventListener("error", () => { slot.textContent = `${item.name} figure unavailable.`; }); slot.append(img);
         }
       });
     });
@@ -310,13 +328,13 @@
     try {
       const response = await fetch(`/api/models/${key}/predict`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.detail || `Request failed (${response.status})`);
+      if (!response.ok) throw new Error(formatApiDetail(body.detail) || `Request failed (${response.status})`);
       result.replaceChildren(); result.className = "prediction-result";
       if (body.status !== "ready" || !body.prediction) {
         result.textContent = body.detail || `Prediction unavailable: ${body.status}.`;
         result.classList.add("error-text");
       } else {
-        const label = document.createElement("div"); label.className = "prediction-label"; label.textContent = `Predicted source class: ${body.prediction}`;
+        const label = document.createElement("div"); label.className = "prediction-label"; label.textContent = key === "sds" ? `Encoded organizational-success class: ${body.prediction}` : `Encoded class prediction: ${body.prediction}`;
         const note = document.createElement("div"); note.className = "prediction-meta"; note.textContent = `${metadata.model_name} · ${metadata.algorithm || "validated local model"}. Source target labels are preserved as encoded; demo input only, not a guarantee or decision recommendation.`;
         result.append(label, note);
       }
@@ -326,6 +344,59 @@
     } finally {
       button.disabled = false; button.textContent = "Run local prediction";
     }
+  }
+
+  function setupTalentForm() {
+    const root = $("#talent-skills");
+    talentOptions.forEach(([value, label]) => {
+      const wrapper = document.createElement("label"); wrapper.className = "skill-choice";
+      const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.name = "skills"; checkbox.value = value;
+      const text = document.createElement("span"); text.textContent = label;
+      wrapper.append(checkbox, text); root.append(wrapper);
+    });
+    $("#talent-form").addEventListener("submit", submitTalentProfile);
+  }
+
+  function addTalentList(parent, title, items, renderItem) {
+    const section = document.createElement("section"); section.className = "talent-result-section";
+    const heading = document.createElement("h3"); heading.textContent = title; section.append(heading);
+    const list = document.createElement("ul");
+    if (!items?.length) { const empty = document.createElement("li"); empty.textContent = "No supported matches in the available aggregate."; list.append(empty); }
+    else items.forEach(item => { const row = document.createElement("li"); row.textContent = renderItem(item); list.append(row); });
+    section.append(list); parent.append(section);
+  }
+
+  function renderTalentProfile(body) {
+    const root = $("#talent-results"); root.replaceChildren();
+    const heading = document.createElement("h2"); heading.textContent = body.title; root.append(heading);
+    const score = document.createElement("p"); score.className = "talent-overlap"; score.textContent = `${body.overlap_percent}% descriptive vocabulary overlap`;
+    const explanation = document.createElement("p"); explanation.textContent = body.explanation; root.append(score, explanation);
+    const sourceNote = document.createElement("p"); sourceNote.className = "summary-copy"; sourceNote.textContent = body.skill_frequency_note; root.append(sourceNote);
+    addTalentList(root, "Profile skills found in the job-market vocabulary", body.matched_skills, item => `${item.label}: ${number(item.frequency)} normalized mentions${item.supporting_terms.length ? ` (${item.supporting_terms.join(", ")})` : ""}`);
+    addTalentList(root, "Selected skills without matching vocabulary terms", body.unmatched_profile_skills, item => item.label);
+    addTalentList(root, "Other high-demand skills to consider", body.missing_high_demand_skills, item => `${item.name}: ${number(item.count)} mentions`);
+    addTalentList(root, "Top role-category suggestions", body.top_role_categories, item => `${item.role} — ${item.overlap_percent}% heuristic rule overlap; ${number(item.role_frequency)} role rows; rule skills: ${item.role_skill_rule.join(", ")}`);
+    const note = document.createElement("p"); note.className = "micro-warning"; note.textContent = body.role_matching_note; root.append(note);
+    body.limitations.forEach(text => { const p = document.createElement("p"); p.className = "micro-warning"; p.textContent = text; root.append(p); });
+  }
+
+  async function submitTalentProfile(event) {
+    event.preventDefault();
+    const selected = [...$("#talent-form").querySelectorAll("input[name=skills]:checked")].map(input => input.value);
+    const error = $("#talent-error"); error.textContent = "";
+    if (!selected.length) { error.textContent = "Select at least one skill to continue."; return; }
+    const button = $("#talent-submit"); button.disabled = true; button.textContent = "Analyzing local aggregates…";
+    try {
+      const response = await fetch("/api/talent/profile", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ skills: selected }) });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(formatApiDetail(body.detail) || `Request failed (${response.status})`);
+      }
+      renderTalentProfile(body);
+    } catch (caught) {
+      error.textContent = `Could not analyze this profile: ${caught.message}`;
+      $("#talent-results").replaceChildren();
+    } finally { button.disabled = false; button.textContent = "Analyze descriptive overlap"; }
   }
 
   async function refresh() {
@@ -346,6 +417,7 @@
   $$(".nav-item").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
   $$('[data-go]').forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
   $("#refresh-button").addEventListener("click", refresh);
+  setupTalentForm();
   window.addEventListener("hashchange", () => {
     const name = window.location.hash.slice(1);
     if ($(`#view-${name}`)) showView(name);

@@ -1,31 +1,38 @@
-# 10-Minute Demo Script
+# Ghost Skills: exact 3-minute demo
 
-## 0:00–1:00 — Problem and objective
+Use the local dashboard at `http://127.0.0.1:8000/`. Confirm the API is running and the real artifacts are ready before the judges arrive. Do not use row-level data on screen. The profile below is an explicitly demo-entered set of skills, not a real candidate record.
 
-Introduce Ghost Skills as a local workforce-intelligence prototype. State the distinction between describing job-posting data and modeling the labels supplied in the two traits datasets. Clarify that the project does not claim causality or rank candidates.
+## 0:00–0:20 — Problem and objective
 
-## 1:00–2:00 — Data and preparation
+“Teams need a clearer view of advertised analytics skills and of what the supplied outcome datasets can—and cannot—support. Ghost Skills turns four organizer datasets into local job-market analysis and two separate, internally evaluated classifiers. Descriptive findings and predictions stay distinct.”
 
-Show the four local source files and the data quality report. Explain actual row counts, missingness, duplicates, parsing rules, and any fields that could not be interpreted. Do not display row-level personal or sensitive data.
+## 0:20–0:50 — Supplied datasets and quality
 
-## 2:00–4:00 — Job-market intelligence
+Open **Methodology** and show the four data sources and audit report. State the observed rows: Analytics Jobs 15,841; DataScience Jobs 1,602; JDS 139; SDS 161. Mention 15,520 missing cells in Analytics Jobs, mostly job type and description, and that no exact duplicate rows were detected. The raw files remain local; show only aggregate quality information.
 
-Open the market view. Show actual role and skill aggregates and one salary/experience figure. Explain source coverage, currency/parseability caveats, and that postings are not a labor-market census.
+## 0:50–1:20 — Job-market insight
 
-## 4:00–6:00 — JDS model
+Open **Job market**. Point to the normalized skill-mention counts: Python 938, SQL 1,009, and Machine Learning 724. Show leading roles (Business Analyst 296, Data Scientist 252) and locations (Bengaluru 4,108, Mumbai 2,643). Say these are mentions and source-row counts, not unique people, deduplicated vacancies, or a labor-market census. The job files have different aggregation structures and no row-level join key.
 
-Show target balance, baseline/model comparison, out-of-fold metrics, confusion matrix, and feature interpretation. Explain the fold strategy and sample-size limitation. Run a prediction only if the real artifact is ready; label the entered values as demo inputs.
+## 1:20–1:50 — Talent Intelligence profile
 
-## 6:00–7:30 — SDS model
+Open **Talent Intelligence**. Select Python, SQL, Machine Learning, Statistics, Big Data, and Dashboard / Storytelling, then submit. Explain the descriptive vocabulary overlap, mention frequencies, missing top-demand skills, and heuristic role suggestions. Read the visible caveat: “This is a descriptive overlap analysis based on supplied job-posting data; it is not a hiring probability.” Role suggestions use explicit title-to-skill rules because the source has no role-by-skill cross-tab. Do not describe this as a trained prediction or candidate score.
 
-Show the supplied target, evaluation, and feature interpretation. State clearly that the model describes association with this dataset’s label and is not universal personality-based hiring truth or a causal claim.
+## 1:50–2:20 — JDS model
 
-## 7:30–8:30 — Architecture and privacy
+Open **Technical skills** and show the selected JDS model, 139 complete cases, five-fold stratified cross-validation, actual metrics, baseline comparison, confusion matrix, and coefficient-magnitude figure. Explain that the prediction is an encoded class because the 0/1 mapping is undocumented. If time permits, open **Predict**, enter values within the displayed observed ranges, and say they are demo inputs.
 
-Show the local data → pipeline → artifacts → API → dashboard flow. Confirm raw data stays local and API routes expose aggregates rather than rows.
+## 2:20–2:40 — SDS model and responsible AI
 
-## 8:30–10:00 — Conclusions and Q&A
+Open **Workforce traits**. Show the selected model and its validation summary. Point to the high-visibility warning: “This exploratory association model is not a hiring score and must not be used to screen individuals.” The output preserves encoded labels and is not a statement about an individual's success.
 
-State only findings present in the generated reports. Close with limitations, additional validation needed, and stakeholder implications as proposed next steps.
+## 2:40–3:00 — Conclusion
 
-**If artifacts are missing:** demonstrate readiness/error handling and explicitly state which source or model result was not available. Do not substitute sample predictions.
+“The prototype connects local data preparation, descriptive analysis, validated local models, an API, and an actionable skill-overlap exploration. The output is useful for framing workforce questions; it is not an employment decision system.” Close with: **“Data → analysis → validated local model → actionable workforce intelligence.”**
+
+## Recovery notes
+
+- If readiness is not `ready`, explain the missing local artifact and do not invent a result.
+- If a figure fails, use the summary figures in `model/figures/` and report the UI issue honestly.
+- If a model prediction is unavailable or outside its observed input range, show the validation message and continue.
+- No step requires external connectivity.

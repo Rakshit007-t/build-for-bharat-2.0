@@ -37,7 +37,7 @@ Metadata is a UTF-8 JSON object validated against this shape:
 
 `training_rows` is a non-negative integer or null while unknown. `feature_names` must exactly match the corresponding ordered list below. `validation_metrics` contains only measured numeric metrics; leave it empty until evaluation exists. `selected_threshold` is a measured numeric threshold or null when not applicable. Do not put placeholder/fabricated metric numbers in metadata.
 
-The local build additionally records the selected algorithm, target, allowed class labels, preprocessing steps, observed feature ranges, limitations, and creation timestamp. API responses omit the training-row count; aggregate source row counts are supplied separately.
+The local build additionally records the selected algorithm, target, allowed class labels, preprocessing steps, observed feature ranges, limitations, and creation timestamp. Model metadata responses include the training-row count for transparent evaluation context; dashboard summary responses expose aggregate source counts and metrics only.
 
 ## JDS model
 

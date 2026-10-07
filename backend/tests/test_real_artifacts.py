@@ -1,4 +1,5 @@
 import json
+import pickle
 from pathlib import Path
 
 import pytest
@@ -14,13 +15,16 @@ ARTIFACTS = ROOT / "model" / "artifacts"
 
 
 @pytest.mark.parametrize("key", ["jds", "sds"])
-def test_generated_model_artifact_predicts_only_declared_class(key):
+def test_api_prediction_matches_local_artifact(key):
     metadata_path = ARTIFACTS / f"{key}_metadata.json"
     model_path = ARTIFACTS / f"{key}_model.pkl"
     if not metadata_path.is_file() or not model_path.is_file():
         pytest.skip("Run model/src/run_pipeline.py to generate local artifacts.")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     payload = {name: (limits["min"] + limits["max"]) / 2 for name, limits in metadata["feature_ranges"].items()}
+    with model_path.open("rb") as file:
+        model = pickle.load(file)
+    expected = str(model.predict([[payload[name] for name in metadata["feature_names"]]])[0])
     app.state.analysis_service = AnalysisService()
     app.state.model_service = ModelService()
     with TestClient(app) as client:
@@ -28,8 +32,9 @@ def test_generated_model_artifact_predicts_only_declared_class(key):
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ready"
+    assert body["prediction"] == expected
     assert body["prediction"] in metadata["class_labels"]
-    assert "training_rows" not in body["model"]
+    assert body["model"]["training_rows"] == metadata["training_rows"]
 
 
 def test_out_of_range_prediction_is_a_validation_error():

@@ -11,6 +11,15 @@ Base URL: `http://127.0.0.1:8000`. Responses are JSON except PNG figure response
 - `GET /api/reports/summary` → dashboard-safe aggregated source row counts, market summary, model names/metrics, limitations, and generation time.
 - `GET /api/figures` → local PNG figure names and API paths.
 - `GET /api/figures/{relative_figure_path}` → a generated PNG contained under `model/figures/`; all other paths return 404.
+- `POST /api/talent/profile` → descriptive overlap against the normalized aggregate skill vocabulary, missing top-demand terms, and up to five heuristic role suggestions with source role frequencies. It does not read or expose raw rows and does not call a trained model.
+
+Talent profile request:
+
+```json
+{"skills": ["python", "sql", "machine_learning"]}
+```
+
+Allowed skill IDs: `python`, `sql`, `machine_learning`, `statistics`, `big_data`, `dashboard_storytelling`. Select one to six distinct skills. The result's overlap percent is the share of selected categories with at least one term in the aggregate skill vocabulary. Skill frequencies come from Analytics Jobs `key_skills`; DataScience Jobs has no extracted skill field. Role suggestions use analyst-authored title-to-skill rules because there is no row-level join key or role-by-skill cross-tab; they are not observed per-role skill matches or hiring probabilities.
 
 ## Prediction requests
 

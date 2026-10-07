@@ -6,7 +6,6 @@ from urllib.parse import quote
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.schemas.api_models import (
@@ -19,13 +18,17 @@ from backend.schemas.api_models import (
     PredictionResponse,
     ReadinessResponse,
     SdsPredictionInput,
+    TalentProfileInput,
+    TalentProfileResponse,
 )
 from backend.services.analysis_service import AnalysisService
 from backend.services.model_service import ModelService
+from backend.services.talent_service import TalentProfileService
 
 app = FastAPI(title="Ghost Skills API", version="0.1.0")
 app.state.analysis_service = AnalysisService()
 app.state.model_service = ModelService()
+app.state.talent_profile_service = TalentProfileService()
 
 
 @app.exception_handler(RequestValidationError)
@@ -35,15 +38,6 @@ async def request_validation_error_handler(request: Request, exc: RequestValidat
         for error in exc.errors()
     ]
     return JSONResponse(status_code=422, content={"status": "validation_error", "detail": details})
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 @app.get("/health")
 def health_check() -> HealthResponse:
@@ -71,6 +65,14 @@ def readiness() -> ReadinessResponse:
 @app.get("/api/analysis/job-market", response_model=JobMarketResponse)
 def job_market_summary() -> JobMarketResponse:
     return app.state.analysis_service.get_job_market_summary()
+
+
+@app.post("/api/talent/profile", response_model=TalentProfileResponse)
+def talent_profile(payload: TalentProfileInput) -> TalentProfileResponse:
+    market = app.state.analysis_service.get_job_market_summary()
+    if market.status != "ready" or market.summary is None:
+        raise HTTPException(status_code=503, detail=market.detail or "Local job-market summary is unavailable.")
+    return app.state.talent_profile_service.analyze(payload, market.summary.model_dump())
 
 
 @app.get("/api/models", response_model=ModelsResponse)

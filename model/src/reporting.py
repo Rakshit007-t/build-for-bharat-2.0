@@ -154,6 +154,14 @@ def build_approach_note(quality: dict[str, Any], job_summary: dict[str, Any] | N
     lines.append("Top skill mentions: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_skills", [])[:10]) + ".")
     lines.append("Most frequent normalized location components: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_locations", [])[:8]) + ".")
     lines.append("Top company job counts as reported in DataScience Jobs: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in summary.get("top_companies", [])[:8]) + ".")
+    lines += ["", "Normalized top-20 skill vocabulary:", "", "| Term | Mention frequency |", "| --- | ---: |"]
+    lines += [f"| {item['name']} | {item['count']:,} |" for item in summary.get("top_skills", [])]
+    lines += ["", "Mention frequencies are not unique people or unique jobs. The job files use different aggregation structures and have no row-level join key."]
+    for source_name, source_result in summary.get("by_dataset", {}).items():
+        if source_result.get("top_roles"):
+            lines += ["", f"Source role labels for {source_name}: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles"][:8]) + "."]
+        if source_result.get("top_roles_by_reported_jobs"):
+            lines += [f"Reported role counts for {source_name}: " + "; ".join(f"{item['name']} ({item['count']:,})" for item in source_result["top_roles_by_reported_jobs"][:8]) + "."]
     lines.append("")
     for name, salary in summary["salary_summary"].get("by_dataset", {}).items():
         lines.append(f"{name} salary: {salary.get('unit')}. Parsed values={salary.get('observed_count', 0):,}; median={salary.get('median')}; observed source categories=" + ", ".join(f"{item['name']} ({item['count']:,})" for item in salary.get("category_counts", [])[:8]) + ".")
@@ -185,7 +193,60 @@ def build_approach_note(quality: dict[str, Any], job_summary: dict[str, Any] | N
     for key in ("jds", "sds"):
         lines += [f"- {item}" for item in (models.get(key) or {}).get("limitations", [])]
     lines += ["- JDS (139 complete cases) and SDS (161 complete cases) are small samples; fold estimates can vary substantially.", "- No external holdout or temporal validation was available.", "- Target codes 0/1 are not documented here; semantic high/low mapping remains unresolved.", "- Potential self-reporting, masking, selection bias, and target-definition issues cannot be quantified from these files alone.", "- The job sources may contain truncation, inconsistent category text, and source-specific coverage; salary-band units in Analytics Jobs are not explicit.", "- The unweighted or reported count aggregation differs by source; reported job counts are not a deduplicated market total.", "- Observational associations do not establish causal effects.", "", "## 18. Future Work", "", "Confirm the target codebook and salary-band units with organizer documentation, evaluate on an independent representative sample, assess temporal and subgroup robustness, review skill extraction and deduplication assumptions, and document feature scales before exposing predictions to users. Keep any SDS result out of individual hiring decisions.", "", "## 19. Appendix References", "", "`data/reports/data_quality_report.md` and `.json`; `data/reports/job_market_report.md`; `model/reports/jds_training.json`; `model/reports/sds_training.json`; `model/artifacts/job_market_summary.json`; and generated figures in `model/figures/`.", ""]
+    lines += [
+        "",
+        "## Descriptive Talent Intelligence Workflow",
+        "",
+        "The dashboard provides a separate descriptive profile workflow for six user-entered categories: Python, SQL, Machine Learning, Statistics, Big Data, and Dashboard/Storytelling. Each category is matched against normalized terms in the aggregate `skill_vocabulary`; its frequency is the sum of available mention counts for supported aliases. Skill mention evidence comes from the Analytics Jobs `key_skills` field; DataScience Jobs has no extracted skill field. The overlap percentage is the number of selected profile categories with at least one supported vocabulary term divided by the number selected. It describes vocabulary coverage only; it is not a model output, candidate fit score, employment probability, or person ranking.",
+        "",
+        "The workflow lists high-frequency skill terms among the ten most-mentioned terms that were not represented by the selected profile. It also surfaces up to five role labels using explicit analyst-authored role-to-skill rules. Role frequencies come from the supplied role aggregates. The sources cannot show that a skill occurs within a particular role because the job files have different aggregation structures and no row-level join key. The UI discloses this beside the results, and the endpoint does not read or expose raw rows.",
+        "",
+        "## Interpretation of model comparisons",
+        "",
+        "The majority-class baseline is included to show performance available from predicting only the most common class. Macro precision, recall, and F1 weight the two encoded classes equally, which is relevant because class counts are similar but not identical. ROC-AUC is calculated from out-of-fold probabilities for the non-baseline estimators. The reported confusion matrices summarize out-of-fold hard predictions. None of these metrics establishes performance on future data, other institutions, or a new population.",
+        "",
+        "The SDS metrics in particular should be read cautiously: its unusually strong separation on 161 supplied rows could be sample-specific or related to how the source label and traits were constructed. The available files do not support a finding about independent job performance. Replication with a documented target and independent, representative data is necessary before broader claims.",
+        "",
+        "## Artifact and API boundaries",
+        "",
+        "The pipeline creates aggregate JSON, model metadata, locally serialized model artifacts, and figures. The API validates metadata against its integration contract and never provides source rows. `/api/talent/profile` consumes the aggregate skill vocabulary and role summary only; `/api/models/{jds|sds}/predict` serves the locally trained model artifacts. Prediction forms label values as demo-entered and validate them against observed training ranges. The source code 0/1 mapping remains unchanged end to end.",
+        "",
+        "Raw organizer datasets and row-level processed files remain local and are ignored by Git. The prototype has no runtime external AI API or remote frontend dependency. For a demo, bind the server to localhost and use only aggregate views.",
+        "",
+        "## Generated artifact references",
+        "",
+        "Data audit: `data/reports/data_quality_report.md` and `.json`. Job-market analysis: `data/reports/job_market_report.md` and `model/artifacts/job_market_summary.json`. Model runs: `model/reports/jds_training.json`, `model/reports/sds_training.json`, and metadata in `model/artifacts/`. Evaluation and market charts: `model/figures/`. API contract: `API_CONTRACT.md`. Demo: `docs/DEMO_SCRIPT.md`. Presentation: `docs/PRESENTATION_OUTLINE.md`.",
+    ]
+    lines = _insert_figure_references(lines, "## 8. Job-Market Analysis", [
+        ("Top normalized skill mentions", "job_market/top_skills.png"),
+        ("Most frequent listed role labels", "job_market/top_roles.png"),
+        ("Most frequent normalized locations", "job_market/top_locations.png"),
+        ("Observed experience requirements", "job_market/experience_distribution.png"),
+        ("Analytics Jobs source salary categories", "job_market/analytics_jobs_salary_bands.png"),
+        ("DataScience Jobs source salary values", "job_market/datascience_jobs_salary_bands.png"),
+    ])
+    lines = _insert_figure_references(lines, "## 10. JDS Results", [
+        ("JDS out-of-fold confusion matrix", "jds/confusion_matrix.png"),
+        ("JDS feature interpretation", "jds/feature_importance.png"),
+        ("JDS candidate model comparison", "jds/model_comparison.png"),
+    ])
+    lines = _insert_figure_references(lines, "## 12. SDS Results", [
+        ("SDS out-of-fold confusion matrix", "sds/confusion_matrix.png"),
+        ("SDS feature interpretation", "sds/feature_importance.png"),
+        ("SDS candidate model comparison", "sds/model_comparison.png"),
+    ])
     return "\n".join(lines)
+
+
+def _insert_figure_references(lines: list[str], heading: str, figures: list[tuple[str, str]]) -> list[str]:
+    start = next((index for index, line in enumerate(lines) if line.strip() == heading), None)
+    if start is None:
+        return lines
+    end = next((index for index in range(start + 1, len(lines)) if lines[index].startswith("## ")), len(lines))
+    insert = [""]
+    insert.extend(f"![Figure: {caption}](../model/figures/{path})" for caption, path in figures)
+    insert.append("")
+    return lines[:end] + insert + lines[end:]
 
 
 def build_approach_docx(markdown_text: str, output_path: Path, figure_dir: Path | None = None) -> None:
@@ -259,6 +320,19 @@ def build_approach_docx(markdown_text: str, output_path: Path, figure_dir: Path 
         elif text.startswith("- "):
             p = document.add_paragraph(style="List Bullet")
             p.add_run(text[2:].replace("`", "").replace("**", ""))
+        elif text.startswith("![Figure:"):
+            match = __import__("re").fullmatch(r"!\[Figure: (.+?)\]\(\.\./model/figures/([^)]+)\)", text)
+            if match and figure_dir:
+                figure = (figure_dir / match.group(2)).resolve()
+                figure_root = figure_dir.resolve()
+                if figure.is_relative_to(figure_root) and figure.is_file():
+                    document.add_page_break()
+                    document.add_picture(str(figure), width=Inches(6.1))
+                    document.inline_shapes[-1]._inline.docPr.set("descr", match.group(1))
+                    caption = document.add_paragraph(match.group(1))
+                    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    caption.runs[0].italic = True
+                    caption.runs[0].font.size = Pt(10)
         elif text.startswith("|"):
             table_lines = []
             while index < len(lines) and lines[index].strip().startswith("|"):
@@ -268,6 +342,10 @@ def build_approach_docx(markdown_text: str, output_path: Path, figure_dir: Path 
             if rows:
                 table = document.add_table(rows=1, cols=len(rows[0]))
                 table.style = "Table Grid"
+                header_props = table.rows[0]._tr.get_or_add_trPr()
+                header_repeat = OxmlElement("w:tblHeader")
+                header_repeat.set(qn("w:val"), "true")
+                header_props.append(header_repeat)
                 for cell, value in zip(table.rows[0].cells, rows[0]):
                     cell.text = value
                     for run in cell.paragraphs[0].runs:
@@ -287,16 +365,26 @@ def build_approach_docx(markdown_text: str, output_path: Path, figure_dir: Path 
                                 run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
             continue
         else:
-            document.add_paragraph(text.replace("`", "").replace("**", ""))
+            paragraph = document.add_paragraph(text.replace("`", "").replace("**", ""))
+            if text.rstrip().endswith(":"):
+                paragraph.paragraph_format.keep_with_next = True
         index += 1
 
     if figure_dir and figure_dir.is_dir():
-        figures = sorted(figure_dir.rglob("*.png"))
+        featured_figures = {
+            "job_market/top_skills.png", "job_market/top_roles.png", "job_market/top_locations.png",
+            "job_market/experience_distribution.png", "job_market/analytics_jobs_salary_bands.png",
+            "job_market/datascience_jobs_salary_bands.png", "jds/confusion_matrix.png",
+            "jds/feature_importance.png", "jds/model_comparison.png", "sds/confusion_matrix.png",
+            "sds/feature_importance.png", "sds/model_comparison.png",
+        }
+        figures = [figure for figure in sorted(figure_dir.rglob("*.png")) if figure.relative_to(figure_dir).as_posix() not in featured_figures]
         if figures:
             document.add_page_break()
             document.add_heading("Appendix: Generated Figures", level=1)
-            for figure in figures:
-                document.add_page_break()
+            for figure_index, figure in enumerate(figures):
+                if figure_index:
+                    document.add_page_break()
                 document.add_picture(str(figure), width=Inches(6.1))
                 picture = document.inline_shapes[-1]._inline.docPr
                 picture.set("descr", figure.stem.replace("_", " "))

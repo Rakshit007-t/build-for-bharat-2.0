@@ -1,6 +1,6 @@
 # Ghost Skills Approach Note
 
-> Generated from local pipeline outputs at 2026-10-07T09:53:59.216261+00:00. All quantities below are drawn from the four supplied files; encoded target classes are retained without an undocumented 0/1 interpretation.
+> Generated from local pipeline outputs at 2026-10-07T10:16:49.230123+00:00. All quantities below are drawn from the four supplied files; encoded target classes are retained without an undocumented 0/1 interpretation.
 
 ## Executive Summary
 
@@ -87,12 +87,53 @@ Top skill mentions: analytics (1,048); sql (1,009); python (938); finance (811);
 Most frequent normalized location components: Bengaluru (4,108); Mumbai (2,643); Gurgaon (2,129); Delhi NCR (1,363); Pune (1,253); Hyderabad (1,179); Chennai (1,083); Noida (682).
 Top company job counts as reported in DataScience Jobs: TCS (9,064); Accenture (5,425); Cognizant (3,813); Wipro (2,566); IBM (2,480); Genpact (2,147); Capgemini (1,994); L&T Infotech (1,873).
 
+Normalized top-20 skill vocabulary:
+
+| Term | Mention frequency |
+| --- | ---: |
+| analytics | 1,048 |
+| sql | 1,009 |
+| python | 938 |
+| finance | 811 |
+| java | 752 |
+| business analysis | 730 |
+| machine learning | 724 |
+| data analysis | 721 |
+| r | 719 |
+| sas | 715 |
+| digital marketing | 612 |
+| project management | 575 |
+| javascript | 561 |
+| data analytics | 526 |
+| seo | 516 |
+| outsourcing | 445 |
+| sales | 432 |
+| excel | 429 |
+| accounting | 398 |
+| marketing | 363 |
+
+Mention frequencies are not unique people or unique jobs. The job files use different aggregation structures and have no row-level join key.
+
+Source role labels for analytics_jobs: Business Analyst (108); Data Scientist (64); Data Analyst (50); Digital Marketing Manager (45); Home Base Job/ Data Entry/online Work/part Time Work/freelancer work (45); Product Manager (44); Digital Marketing Executive (36); Analyst (35).
+Reported role counts for analytics_jobs: Business Analyst (108); Data Scientist (64); Data Analyst (50); Home Base Job/ Data Entry/online Work/part Time Work/freelancer work (45); Digital Marketing Manager (45); Product Manager (44); Digital Marketing Executive (36); Analyst (35).
+
+Source role labels for datascience_jobs: Data Scientist (188); Business Analyst (188); Data Engineer (188); Data Analyst (187); Senior Business Analyst (187); Senior Data Analyst (187); Senior Data Scientist (185); Senior Data Engineer (183).
+Reported role counts for datascience_jobs: Business Analyst (32,843); Data Analyst (18,095); Senior Business Analyst (14,115); Data Scientist (9,051); Data Engineer (8,044); Senior Data Analyst (3,825); Senior Data Engineer (3,411); Senior Data Scientist (2,129).
+
 analytics_jobs salary: source scale as labeled in each record; period is not inferred. Parsed values=0; median=None; observed source categories=10to15 (3,608), 15to25 (3,281), 6to10 (2,876), 0to3 (2,592), 3to6 (2,239), 25to50 (1,245).
 datascience_jobs salary: lakh units encoded by the source L suffix; salary period is not specified in the field. Parsed values=1,602; median=11.9; observed source categories=9.7L (16), 9.9L (15), 12.8L (14), 10.0L (14), 7.7L (14), 7.0L (14), 5.8L (14), 9.8L (13).
 
 Within datascience_jobs, the Pearson correlation of parsed average salary and experience is 0.593 across 1,602 paired rows. This is a descriptive association, not a causal estimate.
 
 The job files do not share a row-level join key, and their fields and aggregation differ. The combined view is a side-by-side summary, not a merged record set. Skill co-occurrence results are available in the generated JSON where the source text supports them.
+
+
+![Figure: Top normalized skill mentions](../model/figures/job_market/top_skills.png)
+![Figure: Most frequent listed role labels](../model/figures/job_market/top_roles.png)
+![Figure: Most frequent normalized locations](../model/figures/job_market/top_locations.png)
+![Figure: Observed experience requirements](../model/figures/job_market/experience_distribution.png)
+![Figure: Analytics Jobs source salary categories](../model/figures/job_market/analytics_jobs_salary_bands.png)
+![Figure: DataScience Jobs source salary values](../model/figures/job_market/datascience_jobs_salary_bands.png)
 
 ## 9. JDS Modelling Approach
 
@@ -124,6 +165,11 @@ Limitations:
 
 The exact comparison values are reported below. The selected logistic model's strongest absolute standardized coefficients rank skill associations in this fitted model; absolute magnitudes do not provide direction and are not causal effects.
 
+
+![Figure: JDS out-of-fold confusion matrix](../model/figures/jds/confusion_matrix.png)
+![Figure: JDS feature interpretation](../model/figures/jds/feature_importance.png)
+![Figure: JDS candidate model comparison](../model/figures/jds/model_comparison.png)
+
 ## 11. SDS Modelling Approach
 
 The same baseline and candidate algorithms, fold logic, metrics, and selection rule are applied to the SDS target after normalizing its header. The source target is also encoded 0/1 without an authoritative semantic mapping. Trait values are model inputs because they are present in the supplied sample; this does not validate use in hiring.
@@ -154,6 +200,11 @@ Limitations:
 ## 12. SDS Results
 
 The random forest's feature-importance values are impurity-based within this fitted model. They describe model reliance in this sample, not causal effects, universal trait validity, or person-level suitability.
+
+
+![Figure: SDS out-of-fold confusion matrix](../model/figures/sds/confusion_matrix.png)
+![Figure: SDS feature interpretation](../model/figures/sds/feature_importance.png)
+![Figure: SDS candidate model comparison](../model/figures/sds/model_comparison.png)
 
 ## 13. Cross-Analysis and Consolidation
 
@@ -205,3 +256,26 @@ Confirm the target codebook and salary-band units with organizer documentation, 
 ## 19. Appendix References
 
 `data/reports/data_quality_report.md` and `.json`; `data/reports/job_market_report.md`; `model/reports/jds_training.json`; `model/reports/sds_training.json`; `model/artifacts/job_market_summary.json`; and generated figures in `model/figures/`.
+
+
+## Descriptive Talent Intelligence Workflow
+
+The dashboard provides a separate descriptive profile workflow for six user-entered categories: Python, SQL, Machine Learning, Statistics, Big Data, and Dashboard/Storytelling. Each category is matched against normalized terms in the aggregate `skill_vocabulary`; its frequency is the sum of available mention counts for supported aliases. Skill mention evidence comes from the Analytics Jobs `key_skills` field; DataScience Jobs has no extracted skill field. The overlap percentage is the number of selected profile categories with at least one supported vocabulary term divided by the number selected. It describes vocabulary coverage only; it is not a model output, candidate fit score, employment probability, or person ranking.
+
+The workflow lists high-frequency skill terms among the ten most-mentioned terms that were not represented by the selected profile. It also surfaces up to five role labels using explicit analyst-authored role-to-skill rules. Role frequencies come from the supplied role aggregates. The sources cannot show that a skill occurs within a particular role because the job files have different aggregation structures and no row-level join key. The UI discloses this beside the results, and the endpoint does not read or expose raw rows.
+
+## Interpretation of model comparisons
+
+The majority-class baseline is included to show performance available from predicting only the most common class. Macro precision, recall, and F1 weight the two encoded classes equally, which is relevant because class counts are similar but not identical. ROC-AUC is calculated from out-of-fold probabilities for the non-baseline estimators. The reported confusion matrices summarize out-of-fold hard predictions. None of these metrics establishes performance on future data, other institutions, or a new population.
+
+The SDS metrics in particular should be read cautiously: its unusually strong separation on 161 supplied rows could be sample-specific or related to how the source label and traits were constructed. The available files do not support a finding about independent job performance. Replication with a documented target and independent, representative data is necessary before broader claims.
+
+## Artifact and API boundaries
+
+The pipeline creates aggregate JSON, model metadata, locally serialized model artifacts, and figures. The API validates metadata against its integration contract and never provides source rows. `/api/talent/profile` consumes the aggregate skill vocabulary and role summary only; `/api/models/{jds|sds}/predict` serves the locally trained model artifacts. Prediction forms label values as demo-entered and validate them against observed training ranges. The source code 0/1 mapping remains unchanged end to end.
+
+Raw organizer datasets and row-level processed files remain local and are ignored by Git. The prototype has no runtime external AI API or remote frontend dependency. For a demo, bind the server to localhost and use only aggregate views.
+
+## Generated artifact references
+
+Data audit: `data/reports/data_quality_report.md` and `.json`. Job-market analysis: `data/reports/job_market_report.md` and `model/artifacts/job_market_summary.json`. Model runs: `model/reports/jds_training.json`, `model/reports/sds_training.json`, and metadata in `model/artifacts/`. Evaluation and market charts: `model/figures/`. API contract: `API_CONTRACT.md`. Demo: `docs/DEMO_SCRIPT.md`. Presentation: `docs/PRESENTATION_OUTLINE.md`.

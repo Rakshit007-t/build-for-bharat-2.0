@@ -72,6 +72,7 @@ Install dependencies once while online; subsequent pipeline, API, and dashboard 
 - `GET /api/models`
 - `POST /api/models/jds/predict`
 - `POST /api/models/sds/predict`
+- `POST /api/talent/profile` (descriptive skill overlap, not a trained prediction)
 - `GET /api/reports/summary`
 - `GET /api/figures` and `GET /api/figures/{relative_figure_path}`
 

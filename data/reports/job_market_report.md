@@ -1,6 +1,6 @@
 # Job Market Analysis
 
-Generated: 2026-10-07T09:53:59.216261+00:00
+Generated: 2026-10-07T10:16:49.230123+00:00
 
 ## Scope and row counts
 
