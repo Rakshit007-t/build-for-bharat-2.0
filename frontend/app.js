@@ -51,7 +51,8 @@
 
   function renderClaims(candidate) {
     $("#verify-claims-step").hidden = false;
-    $("#candidate-heading").textContent = `${candidate.name || "Candidate"} · detected skill claims`;
+    const sourceName = candidate.filename ? ` · ${candidate.filename}` : "";
+    $("#candidate-heading").textContent = `${candidate.name || "Candidate"}${sourceName} · detected skill claims`;
     $("#candidate-education").textContent = candidate.education ? `Education: ${candidate.education}` : "Education was not explicitly extracted.";
     const rows = $("#claims-rows"); rows.replaceChildren();
     candidate.skills.forEach(claim => {
@@ -59,20 +60,48 @@
       const skill = document.createElement("th"); skill.scope = "row"; skill.textContent = claim.skill;
       const level = document.createElement("td"); level.textContent = claim.claimed_level;
       const excerpts = document.createElement("td");
+      if (claim.claim_excerpt) {
+        const source = document.createElement("p"); source.className = "claim-source";
+        source.textContent = `${claim.claim_not_asserted ? "Resume wording (not claimed as a skill)" : "Resume self-description"}: “${claim.claim_excerpt}”`; excerpts.append(source);
+      }
       if (claim.evidence_snippets?.length) {
         const list = document.createElement("ul"); list.className = "excerpt-list";
         claim.evidence_snippets.forEach(snippet => { const item = document.createElement("li"); item.textContent = `“${snippet}”`; list.append(item); });
         excerpts.append(list);
-      } else excerpts.textContent = "No concrete supporting excerpt detected.";
+      } else if (!claim.claim_excerpt) excerpts.append(document.createTextNode("No related resume excerpt detected."));
       const statusCell = document.createElement("td"); statusCell.className = "claim-status";
       const knownResult = state.latestReport?.skills?.find(item => item.skill === claim.skill);
-      statusCell.textContent = knownResult?.status || (claim.claimed_level === "Unspecified" ? "Unverified" : "Pending");
+      const completed = knownResult?.final_score !== null && knownResult?.final_score !== undefined;
+      statusCell.textContent = completed ? "Complete" : claim.assessment_supported ? "Required" : "No local test";
       const action = document.createElement("td");
-      const button = document.createElement("button"); button.className = "small-action"; button.type = "button"; button.textContent = "Start Verification";
-      button.addEventListener("click", () => startAssessment(claim.skill)); action.append(button);
+      if (claim.assessment_supported) {
+        const button = document.createElement("button"); button.className = "small-action"; button.type = "button";
+        button.textContent = completed ? "Completed" : "Start required check"; button.disabled = completed;
+        button.addEventListener("click", () => startAssessment(claim.skill)); action.append(button);
+      } else action.textContent = "No local question bank";
       row.append(skill, level, excerpts, statusCell, action); rows.append(row);
     });
+    const report = state.latestReport;
+    const pending = report?.skills?.filter(item => item.required && item.final_score === null)
+      || candidate.skills.filter(item => item.assessment_supported).map(item => ({skill: item.skill, final_score: null}));
+    const gate = $("#mandatory-progress"); gate.hidden = pending.length === 0;
+    if (pending.length) {
+      $("#mandatory-progress-text").textContent = `${pending.length} required assessment${pending.length === 1 ? "" : "s"} remaining: ${pending.map(item => item.skill).join(", ")}.`;
+      const nextButton = $("#continue-required"); nextButton.textContent = `Continue: ${pending[0].skill}`;
+      nextButton.onclick = () => startAssessment(pending[0].skill);
+    }
+    const requiredDone = !!report?.mandatory_complete || pending.length === 0;
+    renderOptionalChoices(candidate, requiredDone);
     $("#verify-claims-step").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderOptionalChoices(candidate, requiredDone) {
+    const optional = $("#optional-assessments");
+    const choices = candidate.optional_assessments || [];
+    optional.hidden = choices.length === 0;
+    const select = $("#optional-skill-select"); select.replaceChildren();
+    choices.forEach(item => { const option = document.createElement("option"); option.value = item.skill; option.textContent = item.skill; select.append(option); });
+    $("#start-optional-assessment").disabled = !requiredDone || choices.length === 0;
   }
 
   async function uploadFile(file) {
@@ -90,11 +119,11 @@
     } catch (error) { showUploadError(error.message); }
   }
 
-  async function startAssessment(skill) {
+  async function startAssessment(skill, optional = false) {
     const candidateId = state.verificationCandidate?.candidate_id;
     if (!candidateId) return;
     try {
-      state.assessment = await postJson(`/api/verification/${encodeURIComponent(candidateId)}/start`, { skill });
+      state.assessment = await postJson(`/api/verification/${encodeURIComponent(candidateId)}/start`, { skill, optional });
       state.currentQuestion = null;
       $("#assessment-heading").textContent = `${skill} verification`;
       $("#verification-report-page").hidden = true;
@@ -135,7 +164,7 @@
       const feedback = $("#answer-feedback"); feedback.hidden = false; feedback.className = `answer-feedback ${result.correct ? "correct" : "incorrect"}`;
       feedback.textContent = `${result.correct ? "Correct." : "Not quite."} ${result.explanation}`;
       const continueButton = $("#continue-question"); continueButton.hidden = false;
-      continueButton.textContent = result.done ? "View verification report" : "Continue";
+      continueButton.textContent = result.done ? "Check required progress" : "Continue";
       continueButton.onclick = async () => {
         if (result.done) {
           $("#question-progress-label").textContent = "Assessment complete · 3 of 3";
@@ -165,41 +194,53 @@
     completed.forEach(result => {
       const card = document.createElement("article"); card.className = `result-card status-${result.status}`;
       const header = document.createElement("div"); header.className = "result-card-header";
-      const title = document.createElement("div"); addText(title, "p", result.skill.toUpperCase(), "eyebrow"); addText(title, "h2", `${result.status.toUpperCase()}`);
-      const score = addText(header, "strong", `${result.final_score.toFixed(1)}`, "result-total"); header.append(title, score);
+      const discovery = result.origin === "discovery";
+      const title = document.createElement("div"); addText(title, "p", result.skill.toUpperCase(), "eyebrow"); addText(title, "h2", discovery ? "OPTIONAL CHECK" : `${result.status.toUpperCase()}`);
+      const score = addText(header, "strong", `${(discovery ? result.test_score : result.final_score).toFixed(1)}`, "result-total"); header.append(title, score);
       const tiles = document.createElement("div"); tiles.className = "result-metrics";
-      [["CLAIMED", result.claimed_level], ["VERIFIED", result.verified_level || "Unverified"], ["EVIDENCE", result.evidence_score === null ? "—" : `${result.evidence_score.toFixed(1)}/100`], ["TEST", result.test_score === null ? "—" : `${result.test_score.toFixed(1)}/100`], ["FINAL SCORE", `${result.final_score.toFixed(1)}/100`]].forEach(([label, value]) => {
+      const metrics = discovery
+        ? [["RESUME CLAIM", "Not mentioned"], ["KNOWLEDGE CHECK", `${result.test_score.toFixed(1)}/100`], ["CLAIM CLASSIFICATION", "Not applicable"]]
+        : [["CLAIMED", result.claimed_level], ["VERIFIED", result.verified_level || "Unverified"], ["EVIDENCE", result.evidence_score === null ? "—" : `${result.evidence_score.toFixed(1)}/100`], ["TEST", result.test_score === null ? "—" : `${result.test_score.toFixed(1)}/100`], ["FINAL SCORE", `${result.final_score.toFixed(1)}/100`]];
+      metrics.forEach(([label, value]) => {
         const tile = document.createElement("div"); addText(tile, "span", label); addText(tile, "strong", value); tiles.append(tile);
       });
       card.append(header, tiles);
       const calculation = document.createElement("p"); calculation.className = "calculation-line";
-      calculation.textContent = `Evidence ${result.evidence_score.toFixed(1)} × 0.4 = ${(result.evidence_score * 0.4).toFixed(1)}  +  Test ${result.test_score.toFixed(1)} × 0.6 = ${(result.test_score * 0.6).toFixed(1)}  →  Final ${result.final_score.toFixed(1)}`;
+      calculation.textContent = discovery
+        ? `Optional quiz score ${result.test_score.toFixed(1)}/100 · no resume claim to compare.`
+        : `Evidence ${result.evidence_score.toFixed(1)} × 0.4 = ${(result.evidence_score * 0.4).toFixed(1)}  +  Test ${result.test_score.toFixed(1)} × 0.6 = ${(result.test_score * 0.6).toFixed(1)}  →  Final ${result.final_score.toFixed(1)}`;
       card.append(calculation);
       addText(card, "h3", "Why this result?"); addText(card, "p", result.explanation);
-      addText(card, "h3", "Evidence scoring details");
-      const details = document.createElement("ul"); details.className = "excerpt-list";
-      result.evidence_details.forEach(detail => addText(details, "li", detail)); card.append(details);
-      addText(card, "h3", "Resume evidence excerpts");
-      if (result.evidence_snippets.length) {
-        const list = document.createElement("ul"); list.className = "excerpt-list";
-        result.evidence_snippets.forEach(snippet => addText(list, "li", `“${snippet}”`)); card.append(list);
-      } else addText(card, "p", "No concrete supporting excerpt detected.");
-      addText(card, "p", "Prototype heuristic evidence score · Local assessment · Not a hiring decision.", "source-note");
+      if (!discovery) {
+        addText(card, "h3", "Evidence scoring details");
+        const details = document.createElement("ul"); details.className = "excerpt-list";
+        result.evidence_details.forEach(detail => addText(details, "li", detail)); card.append(details);
+        addText(card, "h3", "Resume evidence excerpts");
+        if (result.evidence_snippets.length) {
+          const list = document.createElement("ul"); list.className = "excerpt-list";
+          result.evidence_snippets.forEach(snippet => addText(list, "li", `“${snippet}”`)); card.append(list);
+        } else addText(card, "p", "No concrete supporting excerpt detected.");
+        addText(card, "p", "Prototype heuristic evidence score · Local assessment · Not a hiring decision.", "source-note");
+      } else addText(card, "p", "Local quiz performance only. This is not a hiring decision or a claim verification.", "source-note");
       root.append(card);
     });
     if (!completed.length) addText(root, "p", "Complete a skill assessment to see a result.");
-    const pending = report.skills.filter(item => item.final_score === null);
+    const pending = report.skills.filter(item => item.required && item.final_score === null);
     report.skills.forEach(item => {
       const row = $(`[data-skill-row="${CSS.escape(item.skill)}"]`, $("#claims-rows"));
       const statusCell = row?.querySelector(".claim-status");
-      if (statusCell) statusCell.textContent = item.final_score === null ? (item.status === "unverified" ? "Unverified" : "Pending") : item.status.toUpperCase();
+      if (statusCell) statusCell.textContent = item.final_score === null ? (item.required ? "Required" : "Optional") : item.status.toUpperCase();
+      const actionButton = row?.querySelector("button.small-action");
+      if (actionButton && item.final_score !== null) { actionButton.textContent = "Completed"; actionButton.disabled = true; }
     });
     if (pending.length) {
       const note = document.createElement("p"); note.className = "pending-skills";
-      note.textContent = `Not yet assessed: ${pending.map(item => `${item.skill} (${item.claimed_level})`).join(", ")}.`; root.append(note);
+      note.textContent = `Required assessments still pending: ${pending.map(item => `${item.skill} (${item.claimed_level})`).join(", ")}.`; root.append(note);
     }
+    const optionalPending = report.skills.filter(item => !item.required && item.final_score === null);
+    if (optionalPending.length) addText(root, "p", `Optional checks not taken: ${optionalPending.map(item => item.skill).join(", ")}.`, "pending-skills");
     const market = $("#verification-market-insights");
-    const doneSkills = report.skills.filter(item => item.final_score !== null && item.status !== "unverified").map(item => ({ Python: "python", SQL: "sql", "Machine Learning": "machine_learning" })[item.skill]).filter(Boolean);
+    const doneSkills = report.skills.filter(item => item.required && item.final_score !== null && item.status !== "unverified").map(item => ({ Python: "python", SQL: "sql", "Machine Learning": "machine_learning" })[item.skill]).filter(Boolean);
     market.hidden = false;
     const content = $("#verification-market-content"); content.replaceChildren();
     if (!doneSkills.length) addText(content, "p", "Market alignment is unavailable until a skill has an explicit claim and a completed assessment.");
@@ -213,7 +254,17 @@
     if (!candidateId) return;
     try {
       const report = await getJson(`/api/verification/${encodeURIComponent(candidateId)}/report`);
+      state.latestReport = report;
+      if (!report.mandatory_complete) {
+        $("#verify-assessment-step").hidden = true;
+        $("#verification-report-page").hidden = true;
+        renderClaims(state.verificationCandidate);
+        return;
+      }
       renderVerificationReport(report);
+      const completedOptional = new Set(report.skills.filter(item => !item.required && item.final_score !== null).map(item => item.skill));
+      state.verificationCandidate.optional_assessments = (state.verificationCandidate.optional_assessments || []).filter(item => !completedOptional.has(item.skill));
+      renderOptionalChoices(state.verificationCandidate, true);
       renderVerificationStats(await getJson("/api/verification/stats"));
     } catch (error) { showUploadError(error.message); }
   }
@@ -234,6 +285,10 @@
     ["dragenter", "dragover"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add("dragging"); }));
     ["dragleave", "drop"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("dragging"); }));
     dropzone.addEventListener("drop", event => uploadFile(event.dataTransfer.files[0]));
+    $("#start-optional-assessment").addEventListener("click", () => {
+      const skill = $("#optional-skill-select").value;
+      if (skill) startAssessment(skill, true);
+    });
     $("#print-report").addEventListener("click", () => window.print());
     renderVerificationStats();
   }

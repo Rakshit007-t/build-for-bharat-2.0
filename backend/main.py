@@ -37,6 +37,7 @@ app.state.assessment_service = AssessmentService()
 
 class VerificationStartInput(BaseModel):
     skill: str
+    optional: bool = False
 
 
 class VerificationAnswerInput(BaseModel):
@@ -91,6 +92,7 @@ def talent_profile(payload: TalentProfileInput) -> TalentProfileResponse:
 @app.post("/api/verification/upload")
 async def upload_resume(file: UploadFile | None = File(default=None), text: str | None = Form(default=None)):
     """Extract a local PDF/TXT resume or explicitly submitted text."""
+    uploaded_filename = file.filename if file is not None else None
     if file is None and not text:
         raise HTTPException(status_code=422, detail="Provide a PDF/TXT file or resume text.")
     if file is not None:
@@ -115,11 +117,22 @@ async def upload_resume(file: UploadFile | None = File(default=None), text: str 
         raise HTTPException(status_code=413, detail="Resume text must be 200,000 characters or shorter.")
     extracted = parse_resume(resume_text)
     if not extracted["skills"]:
-        raise HTTPException(status_code=422, detail="No supported skills were detected (Python, SQL, Machine Learning).")
+        raise HTTPException(status_code=422, detail="No recognized skills were detected in the resume.")
     candidate_id = app.state.assessment_service.save_candidate(extracted, resume_text)
-    return {"candidate_id": candidate_id, "name": extracted["name"], "education": extracted["education"],
-            "skills": [{"skill": row["skill"], "claimed_level": row["claimed_level"],
-                        "evidence_snippets": row["evidence_snippets"], "evidence_score": None} for row in extracted["skills"]],
+    mentioned = {row["skill"].casefold() for row in extracted["skills"]}
+    optional_assessments = [item for item in app.state.assessment_service.available_skills()
+                            if item["skill"].casefold() not in mentioned]
+    return {"candidate_id": candidate_id, "name": extracted["name"], "filename": uploaded_filename,
+            "education": extracted["education"],
+            "skills": [{"skill": row["skill"], "slug": row["slug"],
+                        "claimed_level": row["claimed_level"], "claim_excerpt": row["claim_excerpt"],
+                        "claim_not_asserted": row["claim_not_asserted"],
+                        "assessment_supported": row["assessment_supported"],
+                        "evidence_snippets": row["evidence_snippets"],
+                        "evidence_details": row["evidence_details"], "evidence_score": None}
+                       for row in extracted["skills"]],
+            "mandatory_assessments": [row["skill"] for row in extracted["skills"] if row["assessment_supported"]],
+            "optional_assessments": optional_assessments,
             "projects": extracted["projects"], "certifications": extracted["certifications"],
             "notice": "Claims and excerpts are deterministic local extraction; evidence score is a prototype heuristic."}
 
@@ -149,7 +162,7 @@ def get_verification(candidate_id: str):
 @app.post("/api/verification/{candidate_id}/start")
 def start_verification(candidate_id: str, payload: VerificationStartInput):
     try:
-        session_id = app.state.assessment_service.start(candidate_id, payload.skill)
+        session_id = app.state.assessment_service.start(candidate_id, payload.skill, optional=payload.optional)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

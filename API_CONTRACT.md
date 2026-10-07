@@ -21,6 +21,15 @@ Talent profile request:
 
 Allowed skill IDs: `python`, `sql`, `machine_learning`, `statistics`, `big_data`, `dashboard_storytelling`. Select one to six distinct skills. The result's overlap percent is the share of selected categories with at least one term in the aggregate skill vocabulary. Skill frequencies come from Analytics Jobs `key_skills`; DataScience Jobs has no extracted skill field. Role suggestions use analyst-authored title-to-skill rules because there is no row-level join key or role-by-skill cross-tab; they are not observed per-role skill matches or hiring probabilities.
 
+## Local resume assessments
+
+- `POST /api/verification/upload` accepts one local PDF/TXT file or text and returns extracted skill mentions, source excerpts, `mandatory_assessments`, and `optional_assessments` backed by local question banks. Resume-mentioned skills with an available bank are mandatory; only banked skills absent from the resume appear as optional discoveries.
+- `POST /api/verification/{candidate_id}/start` accepts `{"skill":"Python"}` for a required check or `{"skill":"SQL","optional":true}` for an unlisted skill. Optional checks are rejected until all required resume-mentioned assessments are complete.
+- `GET /api/verification/{candidate_id}/report` returns `mandatory_complete`, `mandatory_pending`, and completed results. The frontend withholds the final report until mandatory checks are complete. Optional discovery results report quiz performance only and do not classify a resume claim.
+- Question banks are local JSON files under `content/questions/`; each supported skill has six questions across easy, medium, and hard levels. Skills without a local bank are not assessed.
+
+Resume extraction, question scoring, and candidate storage run locally. A resume excerpt is self-reported text, not independently verified evidence; optional discovery checks have no resume claim to compare.
+
 ## Prediction requests
 
 `POST /api/models/jds/predict` accepts finite numeric values for:
