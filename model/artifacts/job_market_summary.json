@@ -1,0 +1,1042 @@
+{
+  "status": "ready",
+  "total_jobs": 17443,
+  "total_records": 17443,
+  "reported_job_count_total": 108846,
+  "reported_job_count_note": "Sum of per-row num_of_jobs where supplied; one row counted for sources without that field. Not a deduplicated cross-source vacancy total.",
+  "dataset_row_counts": {
+    "analytics_jobs": 15841,
+    "datascience_jobs": 1602
+  },
+  "top_roles": [
+    {
+      "name": "Business Analyst",
+      "count": 296
+    },
+    {
+      "name": "Data Scientist",
+      "count": 252
+    },
+    {
+      "name": "Data Analyst",
+      "count": 237
+    },
+    {
+      "name": "Data Engineer",
+      "count": 207
+    },
+    {
+      "name": "Senior Business Analyst",
+      "count": 206
+    },
+    {
+      "name": "Senior Data Scientist",
+      "count": 199
+    },
+    {
+      "name": "Senior Data Analyst",
+      "count": 195
+    },
+    {
+      "name": "Senior Data Engineer",
+      "count": 184
+    },
+    {
+      "name": "Machine Learning Engineer",
+      "count": 68
+    },
+    {
+      "name": "Data Architect",
+      "count": 56
+    },
+    {
+      "name": "Digital Marketing Manager",
+      "count": 45
+    },
+    {
+      "name": "Home Base Job/ Data Entry/online Work/part Time Work/freelancer work",
+      "count": 45
+    }
+  ],
+  "top_skills": [
+    {
+      "name": "analytics",
+      "count": 1048
+    },
+    {
+      "name": "sql",
+      "count": 1009
+    },
+    {
+      "name": "python",
+      "count": 938
+    },
+    {
+      "name": "finance",
+      "count": 811
+    },
+    {
+      "name": "java",
+      "count": 752
+    },
+    {
+      "name": "business analysis",
+      "count": 730
+    },
+    {
+      "name": "machine learning",
+      "count": 724
+    },
+    {
+      "name": "data analysis",
+      "count": 721
+    },
+    {
+      "name": "r",
+      "count": 719
+    },
+    {
+      "name": "sas",
+      "count": 715
+    },
+    {
+      "name": "digital marketing",
+      "count": 612
+    },
+    {
+      "name": "project management",
+      "count": 575
+    },
+    {
+      "name": "javascript",
+      "count": 561
+    },
+    {
+      "name": "data analytics",
+      "count": 526
+    },
+    {
+      "name": "seo",
+      "count": 516
+    },
+    {
+      "name": "outsourcing",
+      "count": 445
+    },
+    {
+      "name": "sales",
+      "count": 432
+    },
+    {
+      "name": "excel",
+      "count": 429
+    },
+    {
+      "name": "accounting",
+      "count": 398
+    },
+    {
+      "name": "marketing",
+      "count": 363
+    }
+  ],
+  "top_locations": [
+    {
+      "name": "Bengaluru",
+      "count": 4108
+    },
+    {
+      "name": "Mumbai",
+      "count": 2643
+    },
+    {
+      "name": "Gurgaon",
+      "count": 2129
+    },
+    {
+      "name": "Delhi NCR",
+      "count": 1363
+    },
+    {
+      "name": "Pune",
+      "count": 1253
+    },
+    {
+      "name": "Hyderabad",
+      "count": 1179
+    },
+    {
+      "name": "Chennai",
+      "count": 1083
+    },
+    {
+      "name": "Noida",
+      "count": 682
+    },
+    {
+      "name": "Delhi",
+      "count": 382
+    },
+    {
+      "name": "Kolkata",
+      "count": 274
+    },
+    {
+      "name": "Gurugram",
+      "count": 233
+    },
+    {
+      "name": "Ahmedabad",
+      "count": 232
+    }
+  ],
+  "locations": [
+    {
+      "name": "Bengaluru",
+      "count": 4108
+    },
+    {
+      "name": "Mumbai",
+      "count": 2643
+    },
+    {
+      "name": "Gurgaon",
+      "count": 2129
+    },
+    {
+      "name": "Delhi NCR",
+      "count": 1363
+    },
+    {
+      "name": "Pune",
+      "count": 1253
+    },
+    {
+      "name": "Hyderabad",
+      "count": 1179
+    },
+    {
+      "name": "Chennai",
+      "count": 1083
+    },
+    {
+      "name": "Noida",
+      "count": 682
+    },
+    {
+      "name": "Delhi",
+      "count": 382
+    },
+    {
+      "name": "Kolkata",
+      "count": 274
+    },
+    {
+      "name": "Gurugram",
+      "count": 233
+    },
+    {
+      "name": "Ahmedabad",
+      "count": 232
+    }
+  ],
+  "top_companies": [
+    {
+      "name": "TCS",
+      "count": 9064
+    },
+    {
+      "name": "Accenture",
+      "count": 5425
+    },
+    {
+      "name": "Cognizant",
+      "count": 3813
+    },
+    {
+      "name": "Wipro",
+      "count": 2566
+    },
+    {
+      "name": "IBM",
+      "count": 2480
+    },
+    {
+      "name": "Genpact",
+      "count": 2147
+    },
+    {
+      "name": "Capgemini",
+      "count": 1994
+    },
+    {
+      "name": "L&T Infotech",
+      "count": 1873
+    },
+    {
+      "name": "Tech Mahindra",
+      "count": 1830
+    },
+    {
+      "name": "HCL Technologies",
+      "count": 1783
+    },
+    {
+      "name": "Deloitte",
+      "count": 1714
+    },
+    {
+      "name": "Evalueserve",
+      "count": 1698
+    }
+  ],
+  "top_skill_pairs": [
+    {
+      "skills": [
+        "machine learning",
+        "python"
+      ],
+      "cooccurrence_rows": 392
+    },
+    {
+      "skills": [
+        "python",
+        "r"
+      ],
+      "cooccurrence_rows": 289
+    },
+    {
+      "skills": [
+        "machine learning",
+        "r"
+      ],
+      "cooccurrence_rows": 288
+    },
+    {
+      "skills": [
+        "r",
+        "sas"
+      ],
+      "cooccurrence_rows": 279
+    },
+    {
+      "skills": [
+        "digital marketing",
+        "seo"
+      ],
+      "cooccurrence_rows": 277
+    },
+    {
+      "skills": [
+        "business process",
+        "outsourcing"
+      ],
+      "cooccurrence_rows": 225
+    },
+    {
+      "skills": [
+        "analytics",
+        "sas"
+      ],
+      "cooccurrence_rows": 214
+    },
+    {
+      "skills": [
+        "operations",
+        "outsourcing"
+      ],
+      "cooccurrence_rows": 207
+    },
+    {
+      "skills": [
+        "python",
+        "sql"
+      ],
+      "cooccurrence_rows": 204
+    },
+    {
+      "skills": [
+        "sem",
+        "seo"
+      ],
+      "cooccurrence_rows": 200
+    },
+    {
+      "skills": [
+        "java",
+        "python"
+      ],
+      "cooccurrence_rows": 200
+    },
+    {
+      "skills": [
+        "r",
+        "sql"
+      ],
+      "cooccurrence_rows": 184
+    },
+    {
+      "skills": [
+        "css",
+        "javascript"
+      ],
+      "cooccurrence_rows": 184
+    },
+    {
+      "skills": [
+        "html",
+        "javascript"
+      ],
+      "cooccurrence_rows": 182
+    },
+    {
+      "skills": [
+        "accounting",
+        "finance"
+      ],
+      "cooccurrence_rows": 182
+    }
+  ],
+  "salary_summary": {
+    "unit": "varies by source field; numeric values are not pooled or currency-converted",
+    "observed_count": 1602,
+    "mean": null,
+    "median": null,
+    "min": null,
+    "max": null,
+    "by_dataset": {
+      "analytics_jobs": {
+        "unit": "source scale as labeled in each record; period is not inferred",
+        "category_counts": [
+          {
+            "name": "10to15",
+            "count": 3608
+          },
+          {
+            "name": "15to25",
+            "count": 3281
+          },
+          {
+            "name": "6to10",
+            "count": 2876
+          },
+          {
+            "name": "0to3",
+            "count": 2592
+          },
+          {
+            "name": "3to6",
+            "count": 2239
+          },
+          {
+            "name": "25to50",
+            "count": 1245
+          }
+        ],
+        "observed_count": 0,
+        "mean": null,
+        "median": null,
+        "min": null,
+        "max": null
+      },
+      "datascience_jobs": {
+        "unit": "lakh units encoded by the source L suffix; salary period is not specified in the field",
+        "category_counts": [
+          {
+            "name": "9.7L",
+            "count": 16
+          },
+          {
+            "name": "9.9L",
+            "count": 15
+          },
+          {
+            "name": "12.8L",
+            "count": 14
+          },
+          {
+            "name": "10.0L",
+            "count": 14
+          },
+          {
+            "name": "7.7L",
+            "count": 14
+          },
+          {
+            "name": "7.0L",
+            "count": 14
+          },
+          {
+            "name": "5.8L",
+            "count": 14
+          },
+          {
+            "name": "9.8L",
+            "count": 13
+          },
+          {
+            "name": "10.5L",
+            "count": 13
+          },
+          {
+            "name": "9.0L",
+            "count": 13
+          },
+          {
+            "name": "8.2L",
+            "count": 13
+          },
+          {
+            "name": "11.1L",
+            "count": 13
+          }
+        ],
+        "observed_count": 1602,
+        "mean": 13.234893882646691,
+        "median": 11.9,
+        "min": 1.4,
+        "max": 82.0
+      }
+    }
+  },
+  "experience_summary": {
+    "unit": "years",
+    "observed_count": 17443
+  },
+  "notable_relationships": {
+    "datascience_jobs": {
+      "pearson_r": 0.5933493932106845,
+      "paired_rows": 1602,
+      "interpretation": "descriptive association; not causal"
+    }
+  },
+  "limitations": [
+    "Job postings may not represent the full labor market and can contain duplicates, incomplete fields, or source-specific collection bias.",
+    "Salary units and currencies are not converted; unparseable or ambiguous salary values are excluded from numeric summaries.",
+    "Observed relationships are descriptive associations and do not identify causal effects.",
+    "Column roles are inferred from standardized column names and should be reviewed against the source schema."
+  ],
+  "sources": [
+    "analytics_jobs",
+    "datascience_jobs"
+  ],
+  "generated_from": [
+    "analytics_jobs",
+    "datascience_jobs"
+  ],
+  "generated_at": "2026-10-07T09:53:59.216261+00:00",
+  "by_dataset": {
+    "analytics_jobs": {
+      "rows": 15841,
+      "reported_job_count_total": 15841,
+      "reported_job_count_column": null,
+      "columns": 8,
+      "role_column_used": "job_desig",
+      "company_column_used": null,
+      "location_column_used": "location",
+      "top_roles": [
+        {
+          "name": "Business Analyst",
+          "count": 108
+        },
+        {
+          "name": "Data Scientist",
+          "count": 64
+        },
+        {
+          "name": "Data Analyst",
+          "count": 50
+        },
+        {
+          "name": "Digital Marketing Manager",
+          "count": 45
+        },
+        {
+          "name": "Home Base Job/ Data Entry/online Work/part Time Work/freelancer work",
+          "count": 45
+        },
+        {
+          "name": "Product Manager",
+          "count": 44
+        },
+        {
+          "name": "Digital Marketing Executive",
+          "count": 36
+        },
+        {
+          "name": "Analyst",
+          "count": 35
+        },
+        {
+          "name": "SEO Executive",
+          "count": 29
+        },
+        {
+          "name": "SEO Analyst",
+          "count": 26
+        }
+      ],
+      "top_companies": [],
+      "top_roles_by_reported_jobs": [
+        {
+          "name": "Business Analyst",
+          "count": 108
+        },
+        {
+          "name": "Data Scientist",
+          "count": 64
+        },
+        {
+          "name": "Data Analyst",
+          "count": 50
+        },
+        {
+          "name": "Home Base Job/ Data Entry/online Work/part Time Work/freelancer work",
+          "count": 45
+        },
+        {
+          "name": "Digital Marketing Manager",
+          "count": 45
+        },
+        {
+          "name": "Product Manager",
+          "count": 44
+        },
+        {
+          "name": "Digital Marketing Executive",
+          "count": 36
+        },
+        {
+          "name": "Analyst",
+          "count": 35
+        },
+        {
+          "name": "SEO Executive",
+          "count": 29
+        },
+        {
+          "name": "SEO Analyst",
+          "count": 26
+        },
+        {
+          "name": "Microsoft Advanced Analytics",
+          "count": 24
+        },
+        {
+          "name": "Associate",
+          "count": 24
+        }
+      ],
+      "top_companies_by_reported_jobs": [],
+      "top_locations": [
+        {
+          "name": "Bengaluru",
+          "count": 4108
+        },
+        {
+          "name": "Mumbai",
+          "count": 2643
+        },
+        {
+          "name": "Gurgaon",
+          "count": 2129
+        },
+        {
+          "name": "Delhi NCR",
+          "count": 1363
+        },
+        {
+          "name": "Pune",
+          "count": 1253
+        },
+        {
+          "name": "Hyderabad",
+          "count": 1179
+        },
+        {
+          "name": "Chennai",
+          "count": 1083
+        },
+        {
+          "name": "Noida",
+          "count": 682
+        },
+        {
+          "name": "Delhi",
+          "count": 382
+        },
+        {
+          "name": "Kolkata",
+          "count": 274
+        },
+        {
+          "name": "Gurugram",
+          "count": 233
+        },
+        {
+          "name": "Ahmedabad",
+          "count": 232
+        }
+      ],
+      "top_skills": [
+        {
+          "name": "analytics",
+          "count": 1048
+        },
+        {
+          "name": "sql",
+          "count": 1009
+        },
+        {
+          "name": "python",
+          "count": 938
+        },
+        {
+          "name": "finance",
+          "count": 811
+        },
+        {
+          "name": "java",
+          "count": 752
+        },
+        {
+          "name": "business analysis",
+          "count": 730
+        },
+        {
+          "name": "machine learning",
+          "count": 724
+        },
+        {
+          "name": "data analysis",
+          "count": 721
+        },
+        {
+          "name": "r",
+          "count": 719
+        },
+        {
+          "name": "sas",
+          "count": 715
+        },
+        {
+          "name": "digital marketing",
+          "count": 612
+        },
+        {
+          "name": "project management",
+          "count": 575
+        },
+        {
+          "name": "javascript",
+          "count": 561
+        },
+        {
+          "name": "data analytics",
+          "count": 526
+        },
+        {
+          "name": "seo",
+          "count": 516
+        }
+      ],
+      "salary_summary": {
+        "unit": "source scale as labeled in each record; period is not inferred",
+        "category_counts": [
+          {
+            "name": "10to15",
+            "count": 3608
+          },
+          {
+            "name": "15to25",
+            "count": 3281
+          },
+          {
+            "name": "6to10",
+            "count": 2876
+          },
+          {
+            "name": "0to3",
+            "count": 2592
+          },
+          {
+            "name": "3to6",
+            "count": 2239
+          },
+          {
+            "name": "25to50",
+            "count": 1245
+          }
+        ],
+        "observed_count": 0,
+        "mean": null,
+        "median": null,
+        "min": null,
+        "max": null
+      },
+      "experience_summary": {
+        "unit": "years",
+        "observed_count": 15841,
+        "mean": 6.191244239631336,
+        "median": 5.5
+      },
+      "salary_vs_experience_correlation": null
+    },
+    "datascience_jobs": {
+      "rows": 1602,
+      "reported_job_count_total": 93005,
+      "reported_job_count_column": "num_of_jobs",
+      "columns": 8,
+      "role_column_used": "job_title",
+      "company_column_used": "company_name",
+      "location_column_used": null,
+      "top_roles": [
+        {
+          "name": "Data Scientist",
+          "count": 188
+        },
+        {
+          "name": "Business Analyst",
+          "count": 188
+        },
+        {
+          "name": "Data Engineer",
+          "count": 188
+        },
+        {
+          "name": "Data Analyst",
+          "count": 187
+        },
+        {
+          "name": "Senior Business Analyst",
+          "count": 187
+        },
+        {
+          "name": "Senior Data Analyst",
+          "count": 187
+        },
+        {
+          "name": "Senior Data Scientist",
+          "count": 185
+        },
+        {
+          "name": "Senior Data Engineer",
+          "count": 183
+        },
+        {
+          "name": "Machine Learning Engineer",
+          "count": 59
+        },
+        {
+          "name": "Data Architect",
+          "count": 50
+        }
+      ],
+      "top_companies": [
+        {
+          "name": "TCS",
+          "count": 10
+        },
+        {
+          "name": "Accenture",
+          "count": 10
+        },
+        {
+          "name": "IBM",
+          "count": 10
+        },
+        {
+          "name": "Cognizant",
+          "count": 10
+        },
+        {
+          "name": "Capgemini",
+          "count": 10
+        },
+        {
+          "name": "Infosys",
+          "count": 10
+        },
+        {
+          "name": "Wipro",
+          "count": 10
+        },
+        {
+          "name": "Tech Mahindra",
+          "count": 10
+        },
+        {
+          "name": "Deloitte",
+          "count": 10
+        },
+        {
+          "name": "HCL Technologies",
+          "count": 10
+        }
+      ],
+      "top_roles_by_reported_jobs": [
+        {
+          "name": "Business Analyst",
+          "count": 32843
+        },
+        {
+          "name": "Data Analyst",
+          "count": 18095
+        },
+        {
+          "name": "Senior Business Analyst",
+          "count": 14115
+        },
+        {
+          "name": "Data Scientist",
+          "count": 9051
+        },
+        {
+          "name": "Data Engineer",
+          "count": 8044
+        },
+        {
+          "name": "Senior Data Analyst",
+          "count": 3825
+        },
+        {
+          "name": "Senior Data Engineer",
+          "count": 3411
+        },
+        {
+          "name": "Senior Data Scientist",
+          "count": 2129
+        },
+        {
+          "name": "Machine Learning Engineer",
+          "count": 964
+        },
+        {
+          "name": "Data Architect",
+          "count": 528
+        }
+      ],
+      "top_companies_by_reported_jobs": [
+        {
+          "name": "TCS",
+          "count": 9064
+        },
+        {
+          "name": "Accenture",
+          "count": 5425
+        },
+        {
+          "name": "Cognizant",
+          "count": 3813
+        },
+        {
+          "name": "Wipro",
+          "count": 2566
+        },
+        {
+          "name": "IBM",
+          "count": 2480
+        },
+        {
+          "name": "Genpact",
+          "count": 2147
+        },
+        {
+          "name": "Capgemini",
+          "count": 1994
+        },
+        {
+          "name": "L&T Infotech",
+          "count": 1873
+        },
+        {
+          "name": "Tech Mahindra",
+          "count": 1830
+        },
+        {
+          "name": "HCL Technologies",
+          "count": 1783
+        },
+        {
+          "name": "Deloitte",
+          "count": 1714
+        },
+        {
+          "name": "Evalueserve",
+          "count": 1698
+        }
+      ],
+      "top_locations": [],
+      "top_skills": [],
+      "salary_summary": {
+        "unit": "lakh units encoded by the source L suffix; salary period is not specified in the field",
+        "category_counts": [
+          {
+            "name": "9.7L",
+            "count": 16
+          },
+          {
+            "name": "9.9L",
+            "count": 15
+          },
+          {
+            "name": "12.8L",
+            "count": 14
+          },
+          {
+            "name": "10.0L",
+            "count": 14
+          },
+          {
+            "name": "7.7L",
+            "count": 14
+          },
+          {
+            "name": "7.0L",
+            "count": 14
+          },
+          {
+            "name": "5.8L",
+            "count": 14
+          },
+          {
+            "name": "9.8L",
+            "count": 13
+          },
+          {
+            "name": "10.5L",
+            "count": 13
+          },
+          {
+            "name": "9.0L",
+            "count": 13
+          },
+          {
+            "name": "8.2L",
+            "count": 13
+          },
+          {
+            "name": "11.1L",
+            "count": 13
+          }
+        ],
+        "observed_count": 1602,
+        "mean": 13.234893882646691,
+        "median": 11.9,
+        "min": 1.4,
+        "max": 82.0
+      },
+      "experience_summary": {
+        "unit": "years",
+        "observed_count": 1602,
+        "mean": 2.799001248439451,
+        "median": 2.0
+      },
+      "salary_vs_experience_correlation": {
+        "pearson_r": 0.5933493932106845,
+        "paired_rows": 1602,
+        "interpretation": "descriptive association; not causal"
+      }
+    }
+  }
+}

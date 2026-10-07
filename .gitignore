@@ -1,7 +1,14 @@
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
 *.db
 venv/
 .venv/
 .DS_Store
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+SAS Data Problem Statement and Instructions Hackathon/
+/.docx-qa/
+/figures/

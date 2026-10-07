@@ -1,27 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ghost Skills</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f7fc" />
+  <title>Ghost Skills | Workforce Intelligence</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center font-sans antialiased">
-  <main class="text-center p-8 max-w-lg mx-auto">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-6 border border-indigo-500/20 text-3xl">
-      👻
-    </div>
-    <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-      Ghost Skills
-    </h1>
-    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-      AI skill verification layer for hiring. Verify claimed candidate abilities through resume evidence and adaptive testing.
-    </p>
-    <div class="mt-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      System scaffold initialized
-    </div>
-  </main>
-  <script src="/app.js"></script>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview"><span class="brand-mark">G</span><span><strong>Ghost Skills</strong><small>Workforce intelligence</small></span></a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="overview"><span>◫</span>Overview</button>
+        <button class="nav-item" data-view="market"><span>⌁</span>Job market</button>
+        <button class="nav-item" data-view="jds"><span>◈</span>Technical skills</button>
+        <button class="nav-item" data-view="sds"><span>◎</span>Workforce traits</button>
+        <button class="nav-item" data-view="predict"><span>⌘</span>Predict</button>
+        <button class="nav-item" data-view="methodology"><span>☷</span>Methodology</button>
+      </nav>
+      <div class="privacy-card"><span class="privacy-dot"></span><div><strong>Local analysis</strong><small>Data stays on this machine</small></div></div>
+      <div class="sidebar-foot">Build for Bharat 2.0<br /><span>Analytics prototype</span></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><div class="breadcrumb">Ghost Skills <span>/</span> <strong id="current-section">Overview</strong></div><div class="top-actions"><span class="status-pill" id="system-status"><i></i>Checking readiness</span><button class="icon-button" id="refresh-button" title="Refresh data" aria-label="Refresh data">↻</button></div></header>
+      <section class="view active" id="view-overview">
+        <div class="page-heading"><div><p class="eyebrow">TALENT &amp; WORKFORCE ECOSYSTEM</p><h1>Workforce intelligence, grounded in data.</h1><p class="lede">Explore job demand and carefully bounded skill and workforce-trait analyses from the supplied datasets.</p></div><div class="updated">Last generated <strong id="updated-at">Not available</strong></div></div>
+        <div class="notice notice-info" id="data-notice"><span>i</span><div><strong>Waiting for local analysis artifacts</strong><p>Run the pipeline with all four organizer datasets in <code>data/raw/</code>. No placeholder metrics are shown.</p></div></div>
+        <div class="stat-grid" id="overview-stats"></div>
+        <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">JOB MARKET</p><h2>Skills appearing in postings</h2></div><button class="text-button" data-go="market">Explore market →</button></div><div id="overview-skills" class="rank-list empty-state">Market summary is not available yet.</div></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL STATUS</p><h2>Validation snapshot</h2></div><span class="soft-tag">Cross-validation</span></div><div id="overview-models" class="model-list empty-state">No trained model artifacts found.</div></article></div>
+        <div class="content-grid three-col insight-grid" id="insight-cards"></div>
+        <div class="section-heading"><div><p class="eyebrow">LATEST FIGURES</p><h2>Analysis at a glance</h2></div><span class="muted" id="figure-count">No figures generated</span></div><div class="figure-grid" id="overview-figures"></div>
+      </section>
+      <section class="view" id="view-market">
+        <div class="page-heading compact"><div><p class="eyebrow">DESCRIPTIVE ANALYSIS</p><h1>Job market intelligence</h1><p class="lede">Aggregate patterns across Analytics Jobs and DataScience Jobs. These postings are not a census of the labor market.</p></div></div>
+        <div id="market-status" class="notice notice-info"><span>i</span><div><strong>Analysis not available</strong><p>Run the local data pipeline to create the job-market summary and figures.</p></div></div>
+        <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">ROLES</p><h2>Most listed roles</h2></div></div><div class="rank-list" id="market-roles"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">CAPABILITIES</p><h2>Frequently listed skills</h2></div></div><div class="rank-list" id="market-skills"></div></article></div>
+        <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">COMPENSATION</p><h2>Salary distribution</h2></div></div><div class="metric-strip" id="salary-stats"></div><div class="figure-slot" data-figure-match="salary distribution"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">EXPERIENCE</p><h2>Experience requirements</h2></div></div><div id="experience-summary" class="summary-copy"></div><div class="figure-slot" data-figure-match="experience distribution"></div></article></div>
+        <div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">GEOGRAPHY</p><h2>Locations</h2></div></div><div class="rank-list" id="market-locations"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">COMPANIES</p><h2>Reported hiring volume</h2></div></div><div class="rank-list" id="market-companies"></div><p class="micro-warning">Company totals are source-reported counts, not deduplicated vacancies.</p></article></div>
+        <div class="content-grid"><article class="card"><div class="card-head"><div><p class="eyebrow">DATA NOTES</p><h2>Observed relationships and limitations</h2></div></div><div id="market-relationships" class="summary-copy"></div><div id="market-limitations" class="note-list"></div></article></div>
+        <div class="figure-grid" id="market-figures"></div>
+      </section>
+      <section class="view" id="view-jds">
+        <div class="page-heading compact"><div><p class="eyebrow">JDS SKILL TRAITS</p><h1>Technical skill outcomes</h1><p class="lede">An experimental classifier for the dataset’s salary-hike label, evaluated only within the supplied sample.</p></div></div>
+        <div class="notice notice-warning"><span>!</span><div><strong>Association is not causation</strong><p>This model does not show that skills cause salary growth and is not an individual compensation guarantee.</p></div></div>
+        <div class="metric-grid" id="jds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">OUT-OF-FOLD</p><h2>Confusion matrix</h2></div></div><div class="figure-slot" data-figure-match="jds confusion matrix"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature importance</h2></div></div><div class="figure-slot" data-figure-match="jds feature importance"></div><div class="feature-list" id="jds-features"></div></article></div>
+        <article class="card"><div class="card-head"><div><p class="eyebrow">VALIDATION</p><h2>Candidate comparison</h2></div></div><div class="table-wrap" id="jds-comparison"></div></article><button class="primary-button" data-go="predict">Try the technical skill predictor →</button>
+      </section>
+      <section class="view" id="view-sds">
+        <div class="page-heading compact"><div><p class="eyebrow">SDS PERSONALITY TRAITS</p><h1>Workforce traits &amp; supplied success label</h1><p class="lede">An exploratory model examining associations with the label present in the supplied dataset.</p></div></div>
+        <div class="notice notice-warning"><span>!</span><div><strong>Not a hiring score</strong><p>This is not universal personality-based hiring truth. Trait associations do not show that personality causes organizational success. Do not use this output to screen or rank individuals.</p></div></div>
+        <div class="metric-grid" id="sds-metrics"></div><div class="content-grid two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">MODEL INTERPRETATION</p><h2>Feature importance</h2></div></div><div class="figure-slot" data-figure-match="sds feature importance"></div><div class="feature-list" id="sds-features"></div></article><article class="card"><div class="card-head"><div><p class="eyebrow">VALIDATION</p><h2>Candidate comparison</h2></div></div><div class="table-wrap" id="sds-comparison"></div></article></div><button class="primary-button" data-go="predict">Try the workforce-traits predictor →</button>
+      </section>
+      <section class="view" id="view-predict">
+        <div class="page-heading compact"><div><p class="eyebrow">LOCAL MODEL INFERENCE</p><h1>Explore a model prediction</h1><p class="lede">Values entered here are demo inputs for the local model. They are not observed records or validated personal assessments.</p></div></div>
+        <div class="notice notice-info"><span>i</span><div><strong>Use documented feature ranges</strong><p>Input ranges appear only when available from the trained artifact. Predictions describe patterns in a limited sample, not guarantees.</p></div></div>
+        <div class="content-grid two-col predict-grid"><form class="card predictor" id="jds-form"><div class="card-head"><div><p class="eyebrow">JDS MODEL</p><h2>Technical skill outcome</h2></div><span class="model-state" id="jds-predict-status">Checking model</span></div><div class="form-fields" id="jds-fields"></div><button class="primary-button" type="submit" id="jds-submit">Run local prediction</button><div class="prediction-result" id="jds-result" aria-live="polite"></div></form><form class="card predictor" id="sds-form"><div class="card-head"><div><p class="eyebrow">SDS MODEL</p><h2>Supplied success label</h2></div><span class="model-state" id="sds-predict-status">Checking model</span></div><div class="form-fields" id="sds-fields"></div><button class="primary-button" type="submit" id="sds-submit">Run local prediction</button><div class="prediction-result" id="sds-result" aria-live="polite"></div><p class="micro-warning">Exploratory association only. Not a hiring or individual success score.</p></form></div>
+      </section>
+      <section class="view" id="view-methodology">
+        <div class="page-heading compact"><div><p class="eyebrow">TRANSPARENCY</p><h1>Methodology &amp; limitations</h1><p class="lede">A clear separation between what data describes, what a model predicts, and what cannot be concluded.</p></div></div>
+        <div class="content-grid two-col"><article class="card"><p class="eyebrow">DATA SOURCES</p><h2>Four organizer datasets</h2><ul class="prose-list"><li>Analytics Jobs and DataScience Jobs for descriptive posting patterns.</li><li>JDS Skill Traits for the supplied salary-hike high/low classification target.</li><li>SDS Personality Traits for the supplied organizational success label.</li></ul></article><article class="card"><p class="eyebrow">PRIVACY</p><h2>Local-only processing</h2><p>Raw data, analysis, model training, and inference remain on this machine. The API exposes aggregates, model metadata, figures, and predictions; it does not serve raw rows. No external AI API is used.</p></article></div>
+        <div class="content-grid two-col"><article class="card"><p class="eyebrow">ANALYSIS TYPES</p><h2>How to read this prototype</h2><ul class="prose-list"><li><strong>Descriptive:</strong> counts and summaries characterize the supplied postings.</li><li><strong>Predictive:</strong> cross-validated models estimate only their source dataset’s supplied labels.</li><li><strong>Association:</strong> observed trait or skill relationships do not establish cause and effect.</li><li><strong>Implication:</strong> business ideas are hypotheses, not proven outcomes.</li></ul></article><article class="card"><p class="eyebrow">VALIDATION</p><h2>Modeling choices</h2><p>Majority-class baseline, logistic regression, and random forest are compared with stratified cross-validation. Macro precision, recall, F1, accuracy, and ROC-AUC where available are reported. Small samples can make estimates unstable; cross-validation is not external validation.</p></article></div>
+        <div class="content-grid two-col"><article class="card"><p class="eyebrow">KNOWN LIMITATIONS</p><h2>Interpret results with care</h2><div class="note-list" id="all-limitations"></div></article><article class="card"><p class="eyebrow">REPRODUCIBILITY</p><h2>Run locally</h2><pre><code>python model\src\run_pipeline.py
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000</code></pre><p>Reports, model metadata, and figures are generated from local inputs.</p></article></div>
+      </section>
+      <footer class="page-footer">Ghost Skills · dataset-driven analytics prototype <span>Local processing · No external AI services</span></footer>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
 </body>
 </html>

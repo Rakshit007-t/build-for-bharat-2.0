@@ -1,4 +1,5 @@
 import json
+import math
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,9 +76,20 @@ class ModelService:
 
             with metadata_path.open("r", encoding="utf-8") as file:
                 metadata_payload = json.load(file)
+            if "training_rows" not in metadata_payload or not metadata_payload.get("class_labels"):
+                raise ValueError("Model metadata is missing required training_rows or class_labels.")
             metadata = ModelMetadata.model_validate(metadata_payload)
             if metadata.feature_names != spec["features"]:
                 raise ValueError("Model metadata feature_names do not match the integration contract.")
+            if metadata.target != spec["target"]:
+                raise ValueError("Model metadata target does not match the integration contract.")
+            if any(not math.isfinite(value) for value in metadata.validation_metrics.values()):
+                raise ValueError("Model metadata contains a non-finite validation metric.")
+            for name, bounds in metadata.feature_ranges.items():
+                if name not in spec["features"] or set(bounds) != {"min", "max"}:
+                    raise ValueError("Model metadata contains an invalid feature range.")
+                if not all(math.isfinite(value) for value in bounds.values()) or bounds["min"] > bounds["max"]:
+                    raise ValueError("Model metadata contains an invalid feature range.")
 
             # Artifacts are produced locally by the team. Never load user-supplied pickle files.
             with model_path.open("rb") as file:
@@ -118,7 +130,7 @@ class ModelService:
         missing = [name for name in spec["features"] if name not in features]
         if missing:
             return PredictionResponse(
-                status="artifact_invalid",
+                status="validation_error",
                 target=spec["target"],
                 detail="Prediction input is missing required features.",
             )
@@ -127,14 +139,26 @@ class ModelService:
         if loaded is None:
             return PredictionResponse(status=status, target=spec["target"], detail=detail)
 
+        for name in spec["features"]:
+            observed_range = loaded.metadata.feature_ranges.get(name)
+            value = float(features[name])
+            if observed_range and not (observed_range["min"] <= value <= observed_range["max"]):
+                return PredictionResponse(
+                    status="validation_error",
+                    target=spec["target"],
+                    model=loaded.metadata,
+                    detail=f"Feature '{name}' is outside the observed training range.",
+                )
+
         try:
             values = [[float(features[name]) for name in spec["features"]]]
             raw_prediction = loaded.model.predict(values)
             if len(raw_prediction) != 1:
                 raise ValueError("Model returned an unexpected number of predictions.")
             prediction = str(raw_prediction[0]).strip().lower()
-            if prediction not in {"high", "low"}:
-                raise ValueError("Model prediction is not an allowed high/low label.")
+            allowed_labels = {label.strip().lower() for label in loaded.metadata.class_labels}
+            if prediction not in allowed_labels:
+                raise ValueError("Model prediction does not match a class label declared in metadata.")
         except Exception:
             return PredictionResponse(
                 status="artifact_invalid",

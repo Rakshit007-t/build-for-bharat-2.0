@@ -1,0 +1,29 @@
+{
+  "dataset": "sds_traits",
+  "input_rows": 161,
+  "input_columns": 7,
+  "column_standardization": "lowercase words, underscore separators, punctuation removed",
+  "text_cells_normalized": 0,
+  "duplicate_rows_found": 0,
+  "duplicate_rows_removed": 0,
+  "duplicate_indices_removed": [],
+  "missing_tokens_normalized": [
+    "",
+    "-",
+    "--",
+    "n.a.",
+    "n/a",
+    "na",
+    "none",
+    "not available",
+    "null",
+    "unknown"
+  ],
+  "salary_columns_parsed": {},
+  "experience_columns_parsed": {},
+  "skill_columns_normalized": [],
+  "notes": [],
+  "output_rows": 161,
+  "output_columns": 7,
+  "rows_dropped_total": 0
+}

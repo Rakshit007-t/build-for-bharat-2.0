@@ -13,7 +13,7 @@ model/artifacts/
 └── job_market_summary.json
 ```
 
-Model files use Python pickle serialization and must expose a `predict(rows)` method that accepts a two-dimensional, single-row list in the exact feature order below. Only load artifacts produced and trusted locally by the team; pickle files can execute code when loaded. Do not commit organizer datasets.
+Model files use Python pickle serialization and must expose a `predict(rows)` method that accepts a two-dimensional, single-row list in the exact feature order below. Only load artifacts produced and trusted locally; pickle files can execute code when loaded. Do not commit organizer datasets.
 
 Metadata is a UTF-8 JSON object validated against this shape:
 
@@ -21,14 +21,23 @@ Metadata is a UTF-8 JSON object validated against this shape:
 {
   "model_name": "",
   "model_version": "",
+  "algorithm": "",
   "training_rows": null,
   "feature_names": [],
+  "target": "",
+  "class_labels": [],
   "validation_metrics": {},
-  "selected_threshold": null
+  "selected_threshold": null,
+  "preprocessing_steps": [],
+  "feature_ranges": {},
+  "limitations": [],
+  "created_at": ""
 }
 ```
 
 `training_rows` is a non-negative integer or null while unknown. `feature_names` must exactly match the corresponding ordered list below. `validation_metrics` contains only measured numeric metrics; leave it empty until evaluation exists. `selected_threshold` is a measured numeric threshold or null when not applicable. Do not put placeholder/fabricated metric numbers in metadata.
+
+The local build additionally records the selected algorithm, target, allowed class labels, preprocessing steps, observed feature ranges, limitations, and creation timestamp. API responses omit the training-row count; aggregate source row counts are supplied separately.
 
 ## JDS model
 
@@ -41,7 +50,7 @@ Metadata is a UTF-8 JSON object validated against this shape:
   3. `coding_skills`
   4. `ai_and_ml_skills`
   5. `dashboard_and_storytelling_skills`
-- Allowed prediction labels: `high` or `low`.
+- The current source stores the target as encoded numeric labels. The model preserves the observed labels (currently `0` and `1`) in metadata and returns the predicted encoded label. Do not map these to “high”/“low” until organizer documentation confirms the encoding.
 
 ## SDS model
 
@@ -54,7 +63,7 @@ Metadata is a UTF-8 JSON object validated against this shape:
   3. `openness_to_experience`
   4. `agreeableness`
   5. `conscientiousness`
-- Allowed prediction labels: `high` or `low`.
+- The current source stores the target as encoded numeric labels. The model preserves the observed labels (currently `0` and `1`) in metadata and returns the predicted encoded label. Do not map these to “high”/“low” until organizer documentation confirms the encoding.
 
 Person A must document the meaning, scale, and allowed input range of each feature based on the supplied data before the frontend presents an input control. Backend numeric validation rejects non-finite values but does not assume a scale. This predictive interface does not imply that personality causes success or is suitable for individual hiring decisions.
 
@@ -81,5 +90,5 @@ The zero and empty containers above describe field types only; they are not data
 
 - Missing model or metadata: `artifact_missing`; no prediction is returned.
 - Malformed metadata, incompatible feature names, unreadable/corrupt artifact, or model errors: `artifact_invalid`; no prediction is returned.
-- Successful prediction: `ready` with a `high`/`low` label and the validated model metadata. The API does not invent probabilities.
+- Successful prediction: `ready` with the encoded source class and validated model metadata. The API does not invent a high/low class mapping or probabilities.
 - Missing/invalid job-market summary: `artifact_missing` / `artifact_invalid`; no synthetic summary is returned.

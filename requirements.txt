@@ -1,9 +1,11 @@
 fastapi
-uvicorn[standard]
-python-dotenv
-pypdf
-google-genai
+uvicorn
 pydantic
-python-multipart
-requests
+pandas
+openpyxl
+numpy
+scikit-learn
+matplotlib
+python-docx
 pytest
+httpx2

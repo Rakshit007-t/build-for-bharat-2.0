@@ -1,0 +1,399 @@
+{
+  "generated_at": "2026-10-07T09:54:13.410348+00:00",
+  "status": "complete",
+  "datasets": {
+    "analytics_jobs": {
+      "status": "loaded",
+      "audit": {
+        "dataset": "Analytics Jobs.csv",
+        "rows": 15841,
+        "columns": 8,
+        "column_names": [
+          "s_no",
+          "experience",
+          "job_description",
+          "job_desig",
+          "job_type",
+          "key_skills",
+          "location",
+          "salary"
+        ],
+        "duplicate_rows": 0,
+        "missing_values_by_column": {
+          "s_no": 0,
+          "experience": 0,
+          "job_description": 3508,
+          "job_desig": 0,
+          "job_type": 12011,
+          "key_skills": 1,
+          "location": 0,
+          "salary": 0
+        },
+        "missing_cells": 15520
+      },
+      "cleaning": {
+        "dataset": "analytics_jobs",
+        "input_rows": 15841,
+        "input_columns": 8,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 2426,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {},
+        "experience_columns_parsed": {
+          "experience": {
+            "output_column": "experience_years_numeric",
+            "unit": "years; ranges represented by midpoint",
+            "parsed_values": 15841
+          }
+        },
+        "skill_columns_normalized": [
+          "key_skills"
+        ],
+        "notes": [],
+        "output_rows": 15841,
+        "output_columns": 10,
+        "rows_dropped_total": 0
+      }
+    },
+    "datascience_jobs": {
+      "status": "loaded",
+      "audit": {
+        "dataset": "DataScience Jobs.csv",
+        "rows": 1602,
+        "columns": 8,
+        "column_names": [
+          "reference_no",
+          "company_name",
+          "job_title",
+          "min_experience",
+          "avg_salary",
+          "min_salary",
+          "max_salary",
+          "num_of_jobs"
+        ],
+        "duplicate_rows": 0,
+        "missing_values_by_column": {
+          "reference_no": 0,
+          "company_name": 0,
+          "job_title": 0,
+          "min_experience": 0,
+          "avg_salary": 0,
+          "min_salary": 0,
+          "max_salary": 0,
+          "num_of_jobs": 0
+        },
+        "missing_cells": 0
+      },
+      "cleaning": {
+        "dataset": "datascience_jobs",
+        "input_rows": 1602,
+        "input_columns": 8,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 0,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {
+          "avg_salary": {
+            "output_column": "avg_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          },
+          "min_salary": {
+            "output_column": "min_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          },
+          "max_salary": {
+            "output_column": "max_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          }
+        },
+        "experience_columns_parsed": {
+          "min_experience": {
+            "output_column": "min_experience_years_numeric",
+            "unit": "years; ranges represented by midpoint",
+            "parsed_values": 1602
+          }
+        },
+        "skill_columns_normalized": [],
+        "notes": [],
+        "output_rows": 1602,
+        "output_columns": 12,
+        "rows_dropped_total": 0
+      }
+    },
+    "jds": {
+      "status": "loaded",
+      "audit": {
+        "dataset": "JDS Skill Traits.xlsx",
+        "rows": 139,
+        "columns": 7,
+        "column_names": [
+          "id",
+          "big_data_skills",
+          "maths_stats_skills",
+          "coding_skills",
+          "ai_and_ml_skills",
+          "dashboard_and_storytelling_skills",
+          "salary_hike_high_or_low"
+        ],
+        "duplicate_rows": 0,
+        "missing_values_by_column": {
+          "id": 0,
+          "big_data_skills": 0,
+          "maths_stats_skills": 0,
+          "coding_skills": 0,
+          "ai_and_ml_skills": 0,
+          "dashboard_and_storytelling_skills": 0,
+          "salary_hike_high_or_low": 0
+        },
+        "missing_cells": 0
+      },
+      "cleaning": {
+        "dataset": "jds_traits",
+        "input_rows": 139,
+        "input_columns": 7,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 0,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {},
+        "experience_columns_parsed": {},
+        "skill_columns_normalized": [],
+        "notes": [],
+        "output_rows": 139,
+        "output_columns": 7,
+        "rows_dropped_total": 0
+      },
+      "model_status": {
+        "status": "ready",
+        "reason": null
+      }
+    },
+    "sds": {
+      "status": "loaded",
+      "audit": {
+        "dataset": "SDS Personality Traits.xlsx",
+        "rows": 161,
+        "columns": 7,
+        "column_names": [
+          "id",
+          "neuroticism",
+          "extraversion",
+          "openness_to_experience",
+          "agreeableness",
+          "conscientiousness",
+          "success_classification_high_low"
+        ],
+        "duplicate_rows": 0,
+        "missing_values_by_column": {
+          "id": 0,
+          "neuroticism": 0,
+          "extraversion": 0,
+          "openness_to_experience": 0,
+          "agreeableness": 0,
+          "conscientiousness": 0,
+          "success_classification_high_low": 0
+        },
+        "missing_cells": 0
+      },
+      "cleaning": {
+        "dataset": "sds_traits",
+        "input_rows": 161,
+        "input_columns": 7,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 0,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {},
+        "experience_columns_parsed": {},
+        "skill_columns_normalized": [],
+        "notes": [],
+        "output_rows": 161,
+        "output_columns": 7,
+        "rows_dropped_total": 0
+      },
+      "model_status": {
+        "status": "ready",
+        "reason": null
+      }
+    }
+  },
+  "job_market": {
+    "status": "ready",
+    "row_counts": {
+      "analytics_jobs": 15841,
+      "datascience_jobs": 1602
+    },
+    "cleaning": {
+      "analytics_jobs": {
+        "dataset": "analytics_jobs",
+        "input_rows": 15841,
+        "input_columns": 8,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 2426,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {},
+        "experience_columns_parsed": {
+          "experience": {
+            "output_column": "experience_years_numeric",
+            "unit": "years; ranges represented by midpoint",
+            "parsed_values": 15841
+          }
+        },
+        "skill_columns_normalized": [
+          "key_skills"
+        ],
+        "notes": [],
+        "output_rows": 15841,
+        "output_columns": 10,
+        "rows_dropped_total": 0
+      },
+      "datascience_jobs": {
+        "dataset": "datascience_jobs",
+        "input_rows": 1602,
+        "input_columns": 8,
+        "column_standardization": "lowercase words, underscore separators, punctuation removed",
+        "text_cells_normalized": 0,
+        "duplicate_rows_found": 0,
+        "duplicate_rows_removed": 0,
+        "duplicate_indices_removed": [],
+        "missing_tokens_normalized": [
+          "",
+          "-",
+          "--",
+          "n.a.",
+          "n/a",
+          "na",
+          "none",
+          "not available",
+          "null",
+          "unknown"
+        ],
+        "salary_columns_parsed": {
+          "avg_salary": {
+            "output_column": "avg_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          },
+          "min_salary": {
+            "output_column": "min_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          },
+          "max_salary": {
+            "output_column": "max_salary_numeric",
+            "unit": "source scale; monthly values annualized where marked; lakh notation retained in lakh units; ambiguous bands remain missing; period not inferred",
+            "parsed_values": 1602
+          }
+        },
+        "experience_columns_parsed": {
+          "min_experience": {
+            "output_column": "min_experience_years_numeric",
+            "unit": "years; ranges represented by midpoint",
+            "parsed_values": 1602
+          }
+        },
+        "skill_columns_normalized": [],
+        "notes": [],
+        "output_rows": 1602,
+        "output_columns": 12,
+        "rows_dropped_total": 0
+      }
+    }
+  },
+  "models": {
+    "jds": {
+      "status": "ready",
+      "model_name": "JDS Logistic Regression",
+      "validation_metrics": {
+        "accuracy": 0.8345323741007195,
+        "precision_macro": 0.8343035343035343,
+        "recall_macro": 0.8337484433374844,
+        "f1_macro": 0.8339824479410085,
+        "roc_auc": 0.8923827314238273
+      },
+      "reason": null
+    },
+    "sds": {
+      "status": "ready",
+      "model_name": "SDS Random Forest",
+      "validation_metrics": {
+        "accuracy": 0.9565217391304348,
+        "precision_macro": 0.9567441860465116,
+        "recall_macro": 0.9560371517027864,
+        "f1_macro": 0.9563533557956702,
+        "roc_auc": 0.9948916408668731
+      },
+      "reason": null
+    }
+  }
+}
